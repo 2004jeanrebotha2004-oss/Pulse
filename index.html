@@ -23,11 +23,7 @@ input,textarea{width:100%;padding:12px;border-radius:10px;border:none;margin-top
 <body>
 <div id="bar"></div>
 <h1 style="text-align:center">⚡ PULSE</h1>
-
-<!-- PROFILE HEADER -->
 <div id="profileHeader"></div>
-
-<!-- SETUP - shows only if no profile -->
 <div id="setupBox" style="display:none">
 <h3>Create Your Profile 👋</h3>
 <input id="newUsername" placeholder="Choose username e.g. thabo_sa">
@@ -36,25 +32,22 @@ input,textarea{width:100%;padding:12px;border-radius:10px;border:none;margin-top
 <input type="file" id="newPfp" accept="image/*">
 <button onclick="saveProfile()" style="width:100%;background:#00ff88;color:#000;margin-top:10px;padding:14px">Create Profile ✅</button>
 </div>
-
 <div id="mainApp">
 <p style="text-align:center;color:#aaa">Everyone Worldwide Will See It</p>
 <input type="file" id="fileInput" accept="image/*,video/*">
 <textarea id="caption" placeholder="Write caption..."></textarea>
 <button id="publishBtn" onclick="publishPost()">Publish Globally 🚀</button>
 <p id="publishText" style="text-align:center"></p>
-<p style="text-align:center;color:#888;font-size:12px">Videos up to 30 seconds with sound</p>
+<p style="text-align:center;color:#888;font-size:12px">Videos 30 seconds or less with sound</p>
 <button onclick="loadFeed()" style="width:100%;background:#222;color:#fff;margin-top:5px">🔄 Refresh Feed</button>
 <div id="feed"></div>
 </div>
-
 <script>
 const DB = "https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses.json";
 const PROFILES = "https://pulse-v2-707c2-default-rtdb.firebaseio.com/profiles.json";
 let currentUser = JSON.parse(localStorage.getItem('pulse_user')||'null');
 let allProfiles = {};
 let myTotalLikes = 0;
-
 function showSetup(){
   document.getElementById('setupBox').style.display='block';
   document.getElementById('mainApp').style.display='none';
@@ -113,7 +106,6 @@ function saveProfile(){
   if(username.length<3){alert('Username too short');return;}
   function finish(pfp){
     let user={username,bio,pfp:pfp||'',followers:[],following:[]};
-    // save to Firebase
     fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/profiles/${username}.json`,{method:'PUT',body:JSON.stringify(user)}).then(()=>{
       localStorage.setItem('pulse_user',JSON.stringify(user));
       currentUser=user;
@@ -122,7 +114,6 @@ function saveProfile(){
   }
   if(file){ compressImage(file,finish); } else { finish(''); }
 }
-
 function loadFeed(){
   fetch(DB).then(r=>r.json()).then(data=>{
     let feed=document.getElementById('feed');feed.innerHTML='';
@@ -146,7 +137,6 @@ function loadFeed(){
         <br><br><button onclick="likePost('${id}',${p.likes||0},this)">❤️ ${p.likes||0} Like</button> <button onclick="commentPost('${id}')">💬 Comment</button>
         <div>${(p.comments||[]).map(c=>`<p>💬 ${c}</p>`).join('')}</div></div>`;
     });
-    // update my stats
     let likesEl=document.getElementById('myLikesCount'); if(likesEl) likesEl.innerText=myTotalLikes;
     let postsEl=document.getElementById('myPostsCount'); if(postsEl) postsEl.innerText=myPosts;
   });
@@ -176,56 +166,48 @@ function followUser(author,btn){
 function likePost(id,likes,btn){btn.innerText='❤️ '+(likes+1)+' Like';fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PATCH',body:JSON.stringify({likes:likes+1})});}
 function commentPost(id){let t=prompt("Write comment:");if(!t)return;let el=document.createElement('p');el.innerText='💬 '+t;event.target.parentElement.appendChild(el);fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`).then(r=>r.json()).then(p=>{let c=p.comments||[];c.push(t);fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PATCH',body:JSON.stringify({comments:c})});});}
 
-function compressVideo(file, cb, onFail){
-  if(file.size < 3500000){
-    let r=new FileReader(); r.onload=e=>cb(e.target.result); r.readAsDataURL(file); return;
-  }
-  let url=URL.createObjectURL(file);
-  let video=document.createElement('video');
-  video.style.cssText='position:fixed;left:-9999px;top:0;width:320px;';
-  video.muted=false; video.volume=0; video.playsInline=true; video.src=url;
-  document.body.appendChild(video);
-  video.onloadedmetadata=()=>{
-    if(!video.duration || video.duration>32){ video.remove(); onFail(); return; }
-    let stream;
-    try{ stream=video.captureStream(); }catch(e){ video.remove(); onFail(); return; }
-    let mime='video/webm;codecs=vp9,opus';
-    if(!MediaRecorder.isTypeSupported(mime)) mime='video/webm';
-    let recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:450000,audioBitsPerSecond:64000});
-    let chunks=[]; let stopped=false;
-    recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
-    function doStop(){ if(stopped) return; stopped=true; try{recorder.stop();}catch(e){} video.pause(); }
-    recorder.onstop=()=>{
-      video.remove();
-      let blob=new Blob(chunks,{type:'video/webm'});
-      if(blob.size>3800000 || blob.size<10000){ onFail(); return; }
-      let r=new FileReader(); r.onload=e=>cb(e.target.result); r.readAsDataURL(blob);
-    };
-    video.onended=()=>{ setTimeout(doStop,400); };
-    video.onerror=()=>{ video.remove(); onFail(); };
-    video.currentTime=0;
-    video.play().then(()=>{ recorder.start(250); }).catch(()=>{ video.remove(); onFail(); });
-    setTimeout(doStop, (video.duration*1000)+2000);
-  };
-  video.onerror=()=>{ video.remove(); onFail(); };
-}
 function publishPost(){
   if(!currentUser){alert('Create your profile first!');return;}
   let btn=document.getElementById('publishBtn');let bar=document.getElementById('bar');let txt=document.getElementById('publishText');
   let caption=document.getElementById('caption').value;let file=document.getElementById('fileInput').files[0];
-  btn.disabled=true;btn.innerText='Publishing... Please Wait ⏳';btn.style.opacity='0.6';
-  txt.innerText='Uploading 10%...';bar.style.width='10%';
-  let p=10;let timer=setInterval(()=>{p+=8;if(p>=90){p=90;clearInterval(timer);txt.innerText='Almost done 90%...';}else{txt.innerText='Uploading '+p+'%...';}bar.style.width=p+'%';},500);
-  function finish(media,type){fetch(DB,{method:'POST',body:JSON.stringify({caption,media:media||'',type:type||'',likes:0,comments:[],author:currentUser.username,authorPic:currentUser.pfp||''})}).then(()=>{clearInterval(timer);bar.style.width='100%';txt.innerText='Published 100% ✓';btn.innerText='Publish Globally 🚀';btn.disabled=false;btn.style.opacity='1';document.getElementById('caption').value='';document.getElementById('fileInput').value='';loadFeed();setTimeout(()=>{bar.style.width='0%';txt.innerText='';},2000);}).catch(()=>{clearInterval(timer);txt.innerText='Failed - try shorter video';btn.disabled=false;btn.innerText='Publish Globally 🚀';});}
-  function failVideo(){clearInterval(timer);bar.style.width='0%';txt.innerText='❌ Video still too big. Try 25 seconds or less, or trim in Gallery.';btn.disabled=false;btn.innerText='Publish Globally 🚀';btn.style.opacity='1';}
-  if(file){
-    if(file.type.includes('image')){compressImage(file,(s)=>finish(s,'image/jpeg'));}
-    else if(file.type.includes('video')){txt.innerText='Compressing video... please wait, keep this tab open';compressVideo(file,(s)=>finish(s,'video/webm'),failVideo);}
-    else{let r=new FileReader();r.onload=e=>finish(e.target.result,file.type);r.readAsDataURL(file);}
-  } else {finish('','');}
+  function resetBtn(){btn.disabled=false;btn.innerText='Publish Globally 🚀';btn.style.opacity='1';}
+  function failVideo(msg){bar.style.width='0%';txt.innerText=msg;resetBtn();}
+  function doUpload(media,type){
+    btn.disabled=true;btn.innerText='Publishing... Please Wait ⏳';btn.style.opacity='0.6';
+    txt.innerText='Uploading...';bar.style.width='50%';
+    fetch(DB,{method:'POST',body:JSON.stringify({caption,media:media||'',type:type||'',likes:0,comments:[],author:currentUser.username,authorPic:currentUser.pfp||''})}).then(()=>{
+      bar.style.width='100%';txt.innerText='Published 100% ✓';resetBtn();
+      document.getElementById('caption').value='';document.getElementById('fileInput').value='';loadFeed();
+      setTimeout(()=>{bar.style.width='0%';txt.innerText='';},2000);
+    }).catch(()=>{ failVideo('❌ Failed - check internet and try again'); });
+  }
+  if(!file){ doUpload('',''); return; }
+  if(file.type.includes('image')){ compressImage(file,(s)=>doUpload(s,'image/jpeg')); return; }
+  if(file.type.includes('video')){
+    // CHECK LENGTH FIRST - 30 sec or less, just like before
+    let url=URL.createObjectURL(file);
+    let v=document.createElement('video');
+    v.preload='metadata'; v.src=url;
+    v.onloadedmetadata=()=>{
+      URL.revokeObjectURL(url);
+      if(v.duration>30){
+        failVideo('❌ Video too long - must be 30 seconds or less. Trim it and try again.');
+        return;
+      }
+      // Same as before - if file is too big, don't hang at 90%, tell you straight
+      if(file.size>9000000){
+        failVideo('❌ Video file too big. Send it via WhatsApp first to shrink it, then upload that version.');
+        return;
+      }
+      txt.innerText='Uploading video... keep tab open';
+      bar.style.width='10%';
+      let r=new FileReader(); r.onload=e=>doUpload(e.target.result,file.type); r.readAsDataURL(file);
+    };
+    v.onerror=()=>{ failVideo('❌ Could not read video. Try another video.'); };
+    return;
+  }
+  let r=new FileReader(); r.onload=e=>doUpload(e.target.result,file.type); r.readAsDataURL(file);
 }
-
-// START
 loadProfiles(()=>{renderProfile();loadFeed();});
 </script>
 </body>
