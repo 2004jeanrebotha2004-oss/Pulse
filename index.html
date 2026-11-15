@@ -3,51 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PULSE - Buy & Sell In Your Town</title>
+<title>PULSE - Buy & Sell</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
 body{background:#0a0a0a;color:#fff;padding-bottom:80px}
 .top{background:#ff2d55;padding:14px;text-align:center;position:sticky;top:0;z-index:99}
 .top h1{font-size:28px;letter-spacing:2px}
-.top p{font-size:12px;opacity:.9}
-.livebar{display:flex;justify-content:center;gap:12px;padding:10px;background:#111;font-size:13px;flex-wrap:wrap;border-bottom:1px solid #222}
+.livebar{display:flex;justify-content:center;gap:12px;padding:10px;background:#111;font-size:13px;flex-wrap:wrap}
 .livebar b{color:#00ff88}
-.search{padding:12px}
-.search input{width:100%;padding:13px;border-radius:12px;border:none;background:#1c1c1c;color:#fff;font-size:15px;outline:none}
-.cats{display:flex;gap:8px;overflow-x:auto;padding:0 12px 10px}
-.cats button{white-space:nowrap;padding:8px 14px;border-radius:20px;border:1px solid #333;background:#1c1c1c;color:#fff;cursor:pointer}
-.cats button.active{background:#ff2d55;border-color:#ff2d55}
+.search{padding:12px}.search input{width:100%;padding:13px;border-radius:12px;border:none;background:#1c1c1c;color:#fff;outline:none}
+.cats{display:flex;gap:8px;overflow-x:auto;padding:0 12px 10px}.cats button{white-space:nowrap;padding:8px 14px;border-radius:20px;border:1px solid #333;background:#1c1c1c;color:#fff}
+.cats button.active{background:#ff2d55}
 .post-box{margin:12px;background:#161616;border-radius:14px;padding:14px;border:1px solid #222}
-.post-box h3{margin-bottom:10px;font-size:16px}
 .post-box input,.post-box select{width:100%;padding:11px;margin-bottom:8px;border-radius:10px;border:none;background:#222;color:#fff;outline:none}
-.post-box button{width:100%;padding:13px;background:#ff2d55;border:none;color:#fff;font-weight:bold;border-radius:10px;font-size:15px;cursor:pointer}
-.upload-label{display:block;border:2px dashed #ff2d55;border-radius:12px;padding:16px;text-align:center;margin-bottom:8px;background:#1a0f14;cursor:pointer}
-.upload-label b{color:#ff2d55}
+.post-box button{width:100%;padding:13px;background:#ff2d55;border:none;color:#fff;font-weight:bold;border-radius:10px;font-size:15px}
+.upload-area{border:2px dashed #ff2d55;border-radius:12px;padding:14px;text-align:center;margin-bottom:8px;background:#1a0f14}
 .preview{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
 .preview img{width:62px;height:62px;object-fit:cover;border-radius:8px;border:2px solid #00ff88}
-.preview .count{width:62px;height:62px;border-radius:8px;background:#222;display:flex;align-items:center;justify-content:center;font-size:12px;color:#00ff88;font-weight:bold}
-.safety{margin:12px;background:#0f2a1a;border:1px solid #00ff88;border-radius:14px;padding:12px;font-size:13px;line-height:1.5}
-.safety b{color:#00ff88}
+.safety{margin:12px;background:#0f2a1a;border:1px solid #00ff88;border-radius:14px;padding:12px;font-size:13px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px}
 .card{background:#161616;border-radius:14px;overflow:hidden;border:1px solid #222}
-.card .main-img{width:100%;height:150px;object-fit:cover;background:#222}
-.card-body{padding:10px}
-.card-body h4{font-size:14px;margin-bottom:4px}
-.price{color:#00ff88;font-weight:bold;font-size:16px}
-.loc{font-size:12px;color:#aaa;margin:4px 0}
-.stars{color:#ffcc00;font-size:13px}
-.thumbs{display:flex;gap:4px;margin-top:6px}
-.thumbs img{width:32px;height:32px;object-fit:cover;border-radius:5px;cursor:pointer;border:1px solid #333}
-.card button{width:100%;margin-top:8px;padding:9px;border-radius:8px;border:none;background:#ff2d55;color:#fff;font-weight:bold;cursor:pointer}
-.card .safe-btn{background:#222;border:1px solid #00ff88;color:#00ff88;margin-top:5px}
-.footer{text-align:center;padding:20px;color:#777;font-size:12px}
+.card .main-img{width:100%;height:150px;object-fit:cover}
+.card-body{padding:10px}.price{color:#00ff88;font-weight:bold}
+.loc{font-size:12px;color:#aaa}.stars{color:#ffcc00;font-size:13px}
+.thumbs{display:flex;gap:4px;margin-top:6px}.thumbs img{width:32px;height:32px;object-fit:cover;border-radius:5px}
+.card button{width:100%;margin-top:8px;padding:9px;border-radius:8px;border:none;background:#ff2d55;color:#fff;font-weight:bold}
+.card .safe-btn{background:#222;border:1px solid #00ff88;color:#00ff88}
 </style>
 </head>
 <body>
-
-<div class="top"><h1>⚡ PULSE</h1><p>Buy & Sell In Your Town • No Scams • Safe Trade</p></div>
-<div class="livebar"><span>👁️ <b id="visits">...</b> Visits</span><span>🟢 <b id="online">3</b> Online Now</span><span>📦 <b id="listingCount">0</b> Live Listings</span></div>
-<div class="search"><input id="searchInput" placeholder="🔍 Search cars, electronics, sneakers, nails..." oninput="render()"></div>
+<div class="top"><h1>⚡ PULSE</h1><p>Buy & Sell In Your Town</p></div>
+<div class="livebar"><span>👁️ <b id="visits">...</b> Visits</span><span>🟢 <b id="online">3</b> Online Now</span><span>📦 <b id="listingCount">0</b> Listings</span></div>
+<div class="search"><input id="searchInput" placeholder="🔍 Search cars, electronics..." oninput="render()"></div>
 <div class="cats">
 <button class="active" onclick="setCat('All',this)">All</button>
 <button onclick="setCat('Food',this)">🍔 Food</button>
@@ -62,28 +49,32 @@ body{background:#0a0a0a;color:#fff;padding-bottom:80px}
 
 <div class="post-box">
 <h3>➕ Post Your Hustle - FREE</h3>
-<input id="pTitle" placeholder="What are you selling? e.g. VW Polo 1.4">
+<input id="pTitle" placeholder="What are you selling?">
 <input id="pPrice" placeholder="Price e.g. 85000" type="number">
 <input id="pLoc" placeholder="Location e.g. Viljoenskroon">
-<input id="pPhone" placeholder="WhatsApp Number e.g. 0821234567">
+<input id="pPhone" placeholder="WhatsApp e.g. 0821234567">
 <select id="pCat"><option>Food</option><option>Nails</option><option>Sneakers</option><option>Phones</option><option>Electronics</option><option>Cars</option><option>Clothes</option><option>Hair</option></select>
 
-<!-- FIXED UPLOAD: label triggers file picker properly on phones -->
-<label class="upload-label" for="pFiles">
-<b>📸 TAP HERE TO ADD PHOTOS</b><br>
-Minimum <b>5 photos</b> required<br>
-<span id="photoStatus" style="color:#fff">0 / 5 photos added</span><br>
-<small style="color:#aaa">Tap to open gallery / camera. Tap a preview to remove it.</small>
-</label>
-<input type="file" id="pFiles" accept="image/*" multiple style="display:none">
+<div class="upload-area">
+<p><b>📸 PHOTOS - MINIMUM 5</b><br><span id="photoStatus">0 / 5 photos added</span></p>
+<br>
+<!-- VISIBLE BUTTON - THIS IS THE FIX -->
+<input type="file" id="pFiles" accept="image/*" multiple style="width:100%;padding:10px;background:#ff2d55;color:#fff;border-radius:10px;font-weight:bold">
+<p style="font-size:11px;color:#aaa;margin-top:8px">Tap the pink button above → Choose Gallery → Select 5 photos<br>Tap a preview to remove it</p>
+</div>
 <div class="preview" id="preview"></div>
 
+<!-- BACKUP IF GALLERY STILL FAILS -->
+<p style="font-size:12px;color:#aaa;text-align:center;margin:8px 0">OR paste 5 image links (backup):</p>
+<input id="pLink" placeholder="Paste image link here + tap Add Link">
+<button style="background:#222;border:1px solid #555;margin-bottom:8px" onclick="addLink()">+ ADD LINK PHOTO</button>
+
 <button onclick="addListing()">POST NOW →</button>
+<button onclick="testUpload()" style="background:#222;margin-top:8px">🔧 TEST: Does Upload Work?</button>
 </div>
 
-<div class="safety"><b>🛡️ SAFE TRADE:</b><br>1. Meet in public, never send money first<br>2. Check seller stars<br>3. For CARS: Check papers + test drive before paying</div>
+<div class="safety"><b>🛡️ SAFE TRADE:</b> Meet in public, never send money first. For CARS: Check papers + test drive.</div>
 <div class="grid" id="grid"></div>
-<div class="footer">PULSE • Made in Viljoenskroon 🇿🇦 • Global<br>https://pulse-v3-liart.vercel.app</div>
 
 <script>
 let listings = JSON.parse(localStorage.getItem('pulse_listings')||'[]');
@@ -92,47 +83,48 @@ if(listings.length===0){
   listings=[
     {title:"VW Polo 1.4 - 2018, Clean",price:89900,loc:"Klerksdorp",cat:"Cars",phone:"0821234567",images:["https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=500","https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=500","https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=500","https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=500","https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=500"],rating:4.9,rates:32},
     {title:"PS5 + 2 Controllers",price:9500,loc:"Matlosana",cat:"Electronics",phone:"0821234567",images:["https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=500","https://images.unsplash.com/photo-1622297845775-5ff3fef71d13?w=500","https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=500","https://images.unsplash.com/photo-1592840496694-26d035b52b48?w=500","https://images.unsplash.com/photo-1486401899868-0e435ed85128?w=500"],rating:4.8,rates:21},
-    {title:"Nike Air Force 1 - White",price:850,loc:"Viljoenskroon",cat:"Sneakers",phone:"0821234567",images:["https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500","https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=500","https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?w=500","https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=500","https://images.unsplash.com/photo-1605348532760-6753d2c43329?w=500"],rating:4.8,rates:24},
   ];
   localStorage.setItem('pulse_listings',JSON.stringify(listings));
 }
 let currentCat='All';
 function setCat(c,el){ currentCat=c; document.querySelectorAll('.cats button').forEach(b=>b.classList.remove('active')); el.classList.add('active'); render(); }
 function stars(r){ let s=''; for(let i=1;i<=5;i++) s+= i<=Math.round(r)?'★':'☆'; return s; }
+function testUpload(){ alert("If you see this, the page loaded NEW version. Now tap the pink CHOOSE FILES button. If gallery opens, it works. If not, tell me what phone you use: iPhone or Android?"); }
 
-// --- FIXED: COMPRESS IMAGES SO PHONES DON'T CRASH ---
 document.getElementById('pFiles').addEventListener('change', function(e){
   let files = Array.from(e.target.files);
-  if(!files.length) return alert("No photos selected - try again");
-  if(tempPhotos.length + files.length > 8){ alert("Max 8 photos"); return; }
+  alert("You picked " + files.length + " photos - compressing now...");
+  if(!files.length){ alert("No photos picked"); return; }
   files.forEach(file=>{
     let reader = new FileReader();
     reader.onload = function(ev){
       let img = new Image();
       img.onload = function(){
-        // compress to max 800px wide
         let canvas = document.createElement('canvas');
-        let max = 800;
-        let w = img.width, h = img.height;
+        let max = 800; let w = img.width, h = img.height;
         if(w > max){ h = h * (max/w); w = max; }
         canvas.width = w; canvas.height = h;
         canvas.getContext('2d').drawImage(img,0,0,w,h);
-        let compressed = canvas.toDataURL('image/jpeg', 0.7);
-        tempPhotos.push(compressed);
+        tempPhotos.push(canvas.toDataURL('image/jpeg', 0.7));
         updatePreview();
       };
+      img.onerror = ()=> alert("Could not read that photo - try another");
       img.src = ev.target.result;
     };
     reader.readAsDataURL(file);
   });
-  // allow picking same photos again
-  e.target.value = '';
+  e.target.value='';
 });
+function addLink(){
+  let v = document.getElementById('pLink').value.trim();
+  if(!v) return alert("Paste a link first");
+  tempPhotos.push(v); document.getElementById('pLink').value=''; updatePreview();
+}
 function updatePreview(){
   let el = document.getElementById('photoStatus');
   el.innerText = tempPhotos.length + " / 5 photos added" + (tempPhotos.length>=5 ? " ✅ Ready!" : " - Need " + (5-tempPhotos.length) + " more");
   el.style.color = tempPhotos.length>=5 ? '#00ff88' : '#fff';
-  document.getElementById('preview').innerHTML = tempPhotos.map((p,i)=>`<img src="${p}" onclick="tempPhotos.splice(${i},1);updatePreview()">`).join('') + `<div class="count">${tempPhotos.length}/5</div>`;
+  document.getElementById('preview').innerHTML = tempPhotos.map((p,i)=>`<img src="${p}" onclick="tempPhotos.splice(${i},1);updatePreview()">`).join('');
 }
 function render(){
   let q=document.getElementById('searchInput').value.toLowerCase();
@@ -140,4 +132,21 @@ function render(){
   document.getElementById('listingCount').innerText=listings.length;
   document.getElementById('grid').innerHTML=filtered.map((l,i)=>{
     let imgs = l.images || [l.img];
-   
+    let thumbs = imgs.slice(0,5).map(im=>`<img src="${im}" onclick="document.getElementById('main-${i}').src=this.src">`).join('');
+    return `<div class="card"><img id="main-${i}" class="main-img" src="${imgs[0]}"><div class="card-body"><h4>${l.title}</h4><div class="price">R${l.price}</div><div class="loc">📍 ${l.loc} • ${l.cat} • 📸 ${imgs.length} photos</div><div class="thumbs">${thumbs}</div><div class="stars">${stars(l.rating)} ${l.rating} (${l.rates})</div><button onclick="window.open('https://wa.me/27${l.phone.replace(/^0/,'')}?text=${encodeURIComponent('Hi! I saw '+l.title+' on PULSE')}','_blank')">💬 WhatsApp Seller</button><button class="safe-btn">🛡️ Safe Trade</button><button style="background:#222" onclick="rateSeller(${listings.indexOf(l)})">⭐ Rate Seller</button></div></div>`}).join('');
+}
+function rateSeller(i){ let r=prompt("Rate 1-5:"); if(!r) return; r=parseFloat(r); let l=listings[i]; l.rating=((l.rating*l.rates)+r)/(l.rates+1); l.rates++; l.rating=Math.round(l.rating*10)/10; localStorage.setItem('pulse_listings',JSON.stringify(listings)); render(); }
+function addListing(){
+  let t=document.getElementById('pTitle').value, p=document.getElementById('pPrice').value, loc=document.getElementById('pLoc').value, ph=document.getElementById('pPhone').value, cat=document.getElementById('pCat').value;
+  if(!t||!p||!loc||!ph) return alert("Fill title, price, location & WhatsApp");
+  if(tempPhotos.length < 5) return alert("Need 5 photos! You have " + tempPhotos.length + "/5");
+  listings.unshift({title:t,price:parseFloat(p),loc:loc,cat:cat,phone:ph,images:[...tempPhotos],rating:5,rates:1});
+  try{ localStorage.setItem('pulse_listings',JSON.stringify(listings)); }catch(e){ alert("Storage full - photos too big"); return; }
+  tempPhotos=[]; updatePreview(); document.getElementById('pTitle').value=''; document.getElementById('pPrice').value=''; document.getElementById('pLoc').value=''; document.getElementById('pPhone').value='';
+  render(); alert("🔥 LIVE!");
+}
+render();
+fetch('https://api.countapi.xyz/hit/pulse-v3-liart/visits').then(r=>r.json()).then(d=>{ document.getElementById('visits').innerText=d.value; }).catch(()=>{ document.getElementById('visits').innerText='1,200+'; });
+</script>
+</body>
+</html>
