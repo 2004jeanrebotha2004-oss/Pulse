@@ -163,9 +163,3 @@ function followUser(author,btn){
       me.following = me.following.filter(u=>u!==author);
       them.followers = them.followers.filter(u=>u!==currentUser.username);
       btn.innerText='＋ Follow'; btn.style.background='#00ff88'; btn.style.color='#000';
-    } else {
-      me.following.push(author); them.followers.push(currentUser.username);
-      btn.innerText='✓ Following'; btn.style.background='#222'; btn.style.color='#fff';
-    }
-    localStorage.setItem('pulse_user',JSON.stringify(me));
-    allProfiles[currentUser.username]=
