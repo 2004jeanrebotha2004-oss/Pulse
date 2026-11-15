@@ -180,65 +180,48 @@ function followUser(author,btn){
     fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/profiles/${author}.json`,{method:'PUT',body:JSON.stringify(them)}).then(()=>renderProfile());
   });
 }
-function likePost(id,likes,btn){btn.innerText='❤️ '+(likes+1)+' Like';fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PATCH',body:JSON.stringify({likes:likes+1})});}
+  function likePost(id,likes,btn){btn.innerText='❤️ '+(likes+1)+' Like';fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PATCH',body:JSON.stringify({likes:likes+1})});}
 function commentPost(id){
   let comment=prompt('Write a comment:');
   if(!comment) return;
   let p=allFeedData[id];
   if(!p.comments) p.comments=[];
   p.comments.push((currentUser?currentUser.username:'guest')+': '+comment);
-  fetch(DB,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':'$2a$10$DUMMY'},body:JSON.stringify(p)}).catch(()=>{});
-  // save full feed back
-  fetch(DB,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':'$2a$10$DUMMY'},body:JSON.stringify(allFeedData)}).then(()=>loadFeed());
-  let el=document.getElementById('post-'+id);
-  if(el) el.querySelector('div:last-child').innerHTML += `<p>💬 ${comment}</p>`;
-}
-function followUser(username,btn){
-  if(!currentUser) return alert('Create profile first');
-  if(!allProfiles[currentUser.username]) allProfiles[currentUser.username]={following:[]};
-  let list=allProfiles[currentUser.username].following||[];
-  if(list.includes(username)){
-    allProfiles[currentUser.username].following=list.filter(u=>u!==username);
-    btn.innerText='＋ Follow'; btn.style.background='#00ff88'; btn.style.color='#000';
-  } else {
-    list.push(username);
-    allProfiles[currentUser.username].following=list;
-    btn.innerText='✓ Following'; btn.style.background='#222'; btn.style.color='#fff';
-  }
-  localStorage.setItem('pulse_profiles',JSON.stringify(allProfiles));
-}
-function likePost(id,likes,btn){
-  let p=allFeedData[id];
-  p.likes=(p.likes||0)+1;
-  btn.innerText='❤️ '+p.likes+' Like';
-  fetch(DB,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':'$2a$10$DUMMY'},body:JSON.stringify(allFeedData)}).catch(()=>{});
+  fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PATCH',body:JSON.stringify({comments:p.comments})}).then(()=>loadFeed());
 }
 function publishPost(){
   let caption=document.getElementById('caption').value.trim();
   let file=document.getElementById('fileInput').files[0];
   if(!currentUser) return alert('Create profile first');
   if(!caption && !file) return alert('Write something or pick a photo/video');
+  let btn=document.getElementById('publishBtn');
+  btn.disabled=true;
   document.getElementById('publishText').innerText='Publishing...';
+  document.getElementById('bar').style.width='30%';
   let done=(media,type)=>{
     let id='post_'+Date.now();
-    allFeedData[id]={author:currentUser.username,authorPic:currentUser.pfp||'https://via.placeholder.com/40',caption:caption,media:media||'',type:type||'',likes:0,comments:[],time:Date.now()};
-    allFeedIds.unshift(id);
-    fetch(DB,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':'$2a$10$DUMMY'},body:JSON.stringify(allFeedData)}).then(()=>{
+    let newPost={author:currentUser.username,authorPic:currentUser.pfp||'https://via.placeholder.com/40',caption:caption,media:media||'',type:type||'',likes:0,comments:[],time:Date.now()};
+    fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PUT',body:JSON.stringify(newPost)}).then(()=>{
       document.getElementById('caption').value='';
       document.getElementById('fileInput').value='';
+      document.getElementById('bar').style.width='100%';
       document.getElementById('publishText').innerText='Published ✅';
+      btn.disabled=false;
+      setTimeout(()=>{document.getElementById('bar').style.width='0%';},1000);
       loadFeed();
     });
   };
   if(file){
-    let r=new FileReader();
-    r.onload=()=>{ done(r.result, file.type); };
-    r.readAsDataURL(file);
+    if(file.type.includes('video')){
+      let r=new FileReader();
+      r.onload=()=>done(r.result,file.type);
+      r.readAsDataURL(file);
+    } else {
+      compressImage(file,(s)=>done(s,file.type),1000,0.8);
+    }
   } else done('','');
 }
 // START
-let savedUser=localStorage.getItem('pulse_user');
-if(savedUser){ try{ currentUser=JSON.parse(savedUser); }catch(e){} }
 loadProfiles(()=>{ renderProfile(); loadFeed(); });
 </script>
 </body>
