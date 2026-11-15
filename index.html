@@ -123,8 +123,7 @@ function saveProfile(){
     });
   }
   if(file){ compressImage(file,finish,500,0.9); } else { finish(''); }
-}
-function loadFeed(){
+}function loadFeed(){
   fetch(DB).then(r=>r.json()).then(data=>{
     let feed=document.getElementById('feed');feed.innerHTML='';
     if(!data)return;
@@ -163,3 +162,59 @@ function followUser(author,btn){
       me.following = me.following.filter(u=>u!==author);
       them.followers = them.followers.filter(u=>u!==currentUser.username);
       btn.innerText='＋ Follow'; btn.style.background='#00ff88'; btn.style.color='#000';
+    } else {
+      me.following.push(author); them.followers.push(currentUser.username);
+      btn.innerText='✓ Following'; btn.style.background='#222'; btn.style.color='#fff';
+    }
+    localStorage.setItem('pulse_user',JSON.stringify(me));
+    allProfiles[currentUser.username]=me; allProfiles[author]=them;
+    fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/profiles/${currentUser.username}.json`,{method:'PUT',body:JSON.stringify(me)});
+    fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/profiles/${author}.json`,{method:'PUT',body:JSON.stringify(them)}).then(()=>renderProfile());
+  });
+}
+function likePost(id,likes,btn){btn.innerText='❤️ '+(likes+1)+' Like';fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PATCH',body:JSON.stringify({likes:likes+1})});}
+function commentPost(id){let t=prompt("Write comment:");if(!t)return;let el=document.createElement('p');el.innerText='💬 '+t;event.target.parentElement.appendChild(el);fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`).then(r=>r.json()).then(p=>{let c=p.comments||[];c.push(t);fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PATCH',body:JSON.stringify({comments:c})});});}
+function publishPost(){
+  if(!currentUser){alert('Create your profile first!');return;}
+  let btn=document.getElementById('publishBtn');let bar=document.getElementById('bar');let txt=document.getElementById('publishText');
+  let caption=document.getElementById('caption').value;let file=document.getElementById('fileInput').files[0];
+  function resetBtn(){btn.disabled=false;btn.innerText='Publish Globally 🚀';btn.style.opacity='1';}
+  function failVideo(msg){bar.style.width='0%';txt.innerText=msg;resetBtn();}
+  function doUpload(media,type){
+    btn.disabled=true;btn.innerText='Publishing... Please Wait ⏳';btn.style.opacity='0.6';
+    txt.innerText='Uploading...';bar.style.width='50%';
+    fetch(DB,{method:'POST',body:JSON.stringify({caption,media:media||'',type:type||'',likes:0,comments:[],author:currentUser.username,authorPic:currentUser.pfp||''})}).then(()=>{
+      bar.style.width='100%';txt.innerText='Published 100% ✓';resetBtn();
+      document.getElementById('caption').value='';document.getElementById('fileInput').value='';loadFeed();
+      setTimeout(()=>{bar.style.width='0%';txt.innerText='';},2000);
+    }).catch(()=>{ failVideo('❌ Failed - check internet and try again'); });
+  }
+  if(!file){ doUpload('',''); return; }
+  if(file.type.includes('image')){ compressImage(file,(s)=>doUpload(s,'image/jpeg'),1280,0.88); return; }
+  if(file.type.includes('video')){
+    let url=URL.createObjectURL(file);
+    let v=document.createElement('video');
+    v.preload='metadata'; v.src=url;
+    v.onloadedmetadata=()=>{
+      URL.revokeObjectURL(url);
+      if(v.duration>30){
+        failVideo('❌ Video too long - must be 30 seconds or less. Trim it and try again.');
+        return;
+      }
+      if(file.size>9000000){
+        failVideo('❌ Video file too big. Send it via WhatsApp first to shrink it, then upload that version.');
+        return;
+      }
+      txt.innerText='Uploading video... keep tab open';
+      bar.style.width='10%';
+      let r=new FileReader(); r.onload=e=>doUpload(e.target.result,file.type); r.readAsDataURL(file);
+    };
+    v.onerror=()=>{ failVideo('❌ Could not read video. Try another video.'); };
+    return;
+  }
+  let r=new FileReader(); r.onload=e=>doUpload(e.target.result,file.type); r.readAsDataURL(file);
+}
+loadProfiles(()=>{renderProfile();loadFeed();});
+</script>
+</body>
+</html>
