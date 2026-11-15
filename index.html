@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pulse - Global</title>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<style>
+body{background:#000;color:#fff;font-family:Arial;margin:0;padding-bottom:80px}
+.top{display:flex;justify-content:space-between;padding:14px}
+.feed{background:#111;margin:10px;border-radius:16px;padding:10px;text-align:center}
+.feed img{max-width:100%;border-radius:12px;max-height:50vh}
+button{background:#7c3aed;color:#fff;border:0;padding:10px 16px;border-radius:20px;margin:4px}
+input{width:90%;padding:10px;border-radius:12px;border:0;margin:6px}
+.comment{background:#1a1a1a;padding:8px;border-radius:10px;margin:5px;text-align:left}
+</style>
+</head>
+<body>
+<div class="top"><b style="font-size:24px">Pulse 🌍</b><span>For You - GLOBAL</span></div>
+<div id="app">Loading global feed...</div>
+<div style="text-align:center">
+<h3>Upload - Everyone Worldwide Will See It</h3>
+<input type="file" id="file" accept="image/*,video/*"><br>
+<input id="caption" placeholder="Write a caption... #hashtags"><br>
+<button onclick="upload()">Publish Globally 🚀</button>
+</div>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyB7fumL8Kb2hFsusPSwlvEnCJlqWevru1M",
+  authDomain: "pulse-v2-707c2.firebaseapp.com",
+  databaseURL: "https://pulse-v2-707c2-default-rtdb.firebaseio.com",
+  projectId: "pulse-v2-707c2",
+  storageBucket: "pulse-v2-707c2.firebasestorage.app",
+  messagingSenderId: "797811761908",
+  appId: "1:797811761908:web:02e26b2292bf71b99df4a1"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+function load(){
+  db.ref('posts').on('value', snap=>{
+    let data = snap.val() || {};
+    let list = Object.entries(data).reverse();
+    let html='';
+    if(list.length==0) html='<p style="text-align:center">No posts yet. Be first to publish globally!</p>';
+    list.forEach(([id,p])=>{
+      html+=`<div class="feed">
+      ${p.image?`<img src="${p.image}">`:'<h2>🎬 Pulse Video</h2>'}
+      <p><b>@pulse_user</b> - ${p.caption||''}</p>
+      <button onclick="like('${id}',${p.likes||0})">❤️ ${p.likes||0}</button>
+      <button onclick="document.getElementById('c${id}').style.display='block'">💬 ${(p.comments||[]).length}</button>
+      <div id="c${id}" style="display:none">
+      ${(p.comments||[]).map(c=>`<div class="comment">${c}</div>`).join('')}
+      <input id="nc${id}" placeholder="Add a comment...">
+      <button onclick="addComment('${id}')">Send</button>
+      </div></div>`;
+    });
+    document.getElementById('app').innerHTML=html;
+  });
+}
+function like(id,likes){ db.ref('posts/'+id+'/likes').set(likes+1); }
+function addComment(id){
+  let v=document.getElementById('nc'+id).value; if(!v) return;
+  db.ref('posts/'+id+'/comments').once('value', snap=>{
+    let arr=snap.val()||[]; arr.push(v);
+    db.ref('posts/'+id+'/comments').set(arr);
+  });
+}
+function upload(){
+  let f=document.getElementById('file').files[0];
+  let cap=document.getElementById('caption').value||'New Pulse video #pulse';
+  if(!f){alert('Pick a photo/video first');return;}
+  let r=new FileReader();
+  r.onload=()=>{
+    db.ref('posts').push({caption:cap, image:r.result, likes:0, comments:[]});
+    alert('Published Globally! Everyone sees it now!');
+  };
+  r.readAsDataURL(f);
+}
+load();
+</script>
+</body>
+</html>
