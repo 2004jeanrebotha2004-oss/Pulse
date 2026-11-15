@@ -2,81 +2,33 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pulse - Global</title>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<title>Pulse</title>
 <style>
-body{background:#000;color:#fff;font-family:Arial;margin:0;padding-bottom:80px}
-.top{display:flex;justify-content:space-between;padding:14px}
-.feed{background:#111;margin:10px;border-radius:16px;padding:10px;text-align:center}
-.feed img{max-width:100%;border-radius:12px;max-height:50vh}
-button{background:#7c3aed;color:#fff;border:0;padding:10px 16px;border-radius:20px;margin:4px}
-input{width:90%;padding:10px;border-radius:12px;border:0;margin:6px}
-.comment{background:#1a1a1a;padding:8px;border-radius:10px;margin:5px;text-align:left}
+body{background:#000;color:#fff;font-family:Arial;margin:0;padding:10px;padding-top:15px}
+#bar{height:10px;background:#00ff88;width:0%;position:fixed;top:0;left:0;z-index:9999}
+.card{background:#111;border-radius:15px;padding:10px;margin-top:15px}
+img,video{width:100%;border-radius:12px;margin-top:8px}
+button{border:none;border-radius:10px;padding:10px 15px;font-weight:bold;cursor:pointer}
+input,textarea{width:100%;padding:12px;border-radius:10px;border:none;margin-top:8px;box-sizing:border-box}
+#publishBtn{width:100%;padding:15px;background:#ff0055;color:#fff;font-size:17px;margin-top:10px}
 </style>
 </head>
 <body>
-<div class="top"><b style="font-size:24px">Pulse 🌍</b><span>For You - GLOBAL</span></div>
-<div id="app">Loading global feed...</div>
-<div style="text-align:center">
-<h3>Upload - Everyone Worldwide Will See It</h3>
-<input type="file" id="file" accept="image/*,video/*"><br>
-<input id="caption" placeholder="Write a caption... #hashtags"><br>
-<button onclick="upload()">Publish Globally 🚀</button>
-</div>
+<div id="bar"></div>
+<h1 style="text-align:center">⚡ PULSE</h1>
+<p style="text-align:center;color:#aaa">Everyone Worldwide Will See It</p>
+<input type="file" id="fileInput" accept="image/*,video/*">
+<textarea id="caption" placeholder="Write caption..."></textarea>
+<button id="publishBtn" onclick="publishPost()">Publish Globally 🚀</button>
+<p id="publishText" style="text-align:center"></p>
+<div id="feed"></div>
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyB7fumL8Kb2hFsusPSwlvEnCJlqWevru1M",
-  authDomain: "pulse-v2-707c2.firebaseapp.com",
-  databaseURL: "https://pulse-v2-707c2-default-rtdb.firebaseio.com",
-  projectId: "pulse-v2-707c2",
-  storageBucket: "pulse-v2-707c2.firebasestorage.app",
-  messagingSenderId: "797811761908",
-  appId: "1:797811761908:web:02e26b2292bf71b99df4a1"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-function load(){
-  db.ref('posts').on('value', snap=>{
-    let data = snap.val() || {};
-    let list = Object.entries(data).reverse();
-    let html='';
-    if(list.length==0) html='<p style="text-align:center">No posts yet. Be first to publish globally!</p>';
-    list.forEach(([id,p])=>{
-      html+=`<div class="feed">
-      ${p.image?`<img src="${p.image}">`:'<h2>🎬 Pulse Video</h2>'}
-      <p><b>@pulse_user</b> - ${p.caption||''}</p>
-      <button onclick="like('${id}',${p.likes||0})">❤️ ${p.likes||0}</button>
-      <button onclick="document.getElementById('c${id}').style.display='block'">💬 ${(p.comments||[]).length}</button>
-      <div id="c${id}" style="display:none">
-      ${(p.comments||[]).map(c=>`<div class="comment">${c}</div>`).join('')}
-      <input id="nc${id}" placeholder="Add a comment...">
-      <button onclick="addComment('${id}')">Send</button>
-      </div></div>`;
-    });
-    document.getElementById('app').innerHTML=html;
-  });
-}
-function like(id,likes){ db.ref('posts/'+id+'/likes').set(likes+1); }
-function addComment(id){
-  let v=document.getElementById('nc'+id).value; if(!v) return;
-  db.ref('posts/'+id+'/comments').once('value', snap=>{
-    let arr=snap.val()||[]; arr.push(v);
-    db.ref('posts/'+id+'/comments').set(arr);
-  });
-}
-function upload(){
-  let f=document.getElementById('file').files[0];
-  let cap=document.getElementById('caption').value||'New Pulse video #pulse';
-  if(!f){alert('Pick a photo/video first');return;}
-  let r=new FileReader();
-  r.onload=()=>{
-    db.ref('posts').push({caption:cap, image:r.result, likes:0, comments:[]});
-    alert('Published Globally! Everyone sees it now!');
-  };
-  r.readAsDataURL(f);
-}
-load();
+const DB = "https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses.json";
+function loadFeed(){fetch(DB).then(r=>r.json()).then(data=>{let feed=document.getElementById('feed');feed.innerHTML='';if(!data)return;Object.keys(data).reverse().forEach(id=>{let p=data[id];feed.innerHTML+=`<div class="card"><b>@pulse_user</b><p>${p.caption||''}</p>${p.media?(p.type&&p.type.includes('video')?`<video src="${p.media}" controls></video>`:`<img src="${p.media}">`):''}<br><br><button onclick="likePost('${id}',${p.likes||0})">❤️ ${p.likes||0} Like</button> <button onclick="commentPost('${id}')">💬 Comment</button><div>${(p.comments||[]).map(c=>`<p>💬 ${c}</p>`).join('')}</div></div>`;});});}
+loadFeed();setInterval(loadFeed,5000);
+function likePost(id,likes){fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PATCH',body:JSON.stringify({likes:likes+1})}).then(()=>loadFeed());}
+function commentPost(id){let t=prompt("Write comment:");if(!t)return;fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`).then(r=>r.json()).then(p=>{let c=p.comments||[];c.push(t);fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PATCH',body:JSON.stringify({comments:c})}).then(()=>loadFeed());});}
+function publishPost(){let btn=document.getElementById('publishBtn');let bar=document.getElementById('bar');let txt=document.getElementById('publishText');let caption=document.getElementById('caption').value;let file=document.getElementById('fileInput').files[0];btn.disabled=true;btn.innerText='Publishing... Please Wait ⏳';btn.style.opacity='0.6';txt.innerText='Uploading 10%...';bar.style.width='10%';let p=10;let timer=setInterval(()=>{p+=15;if(p>=90){p=90;clearInterval(timer);txt.innerText='Almost done 90%...';}else{txt.innerText='Uploading '+p+'%...';}bar.style.width=p+'%';},300);function finish(media,type){fetch(DB,{method:'POST',body:JSON.stringify({caption,media:media||'',type:type||'',likes:0,comments:[]})}).then(()=>{clearInterval(timer);bar.style.width='100%';txt.innerText='Published 100% ✓';btn.innerText='Publish Globally 🚀';btn.disabled=false;btn.style.opacity='1';document.getElementById('caption').value='';document.getElementById('fileInput').value='';loadFeed();setTimeout(()=>{bar.style.width='0%';txt.innerText='';},2000);});}if(file){let r=new FileReader();r.onload=e=>finish(e.target.result,file.type);r.readAsDataURL(file);}else{finish('','');}}
 </script>
 </body>
 </html>
