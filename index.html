@@ -35,15 +35,25 @@ let currentUser=JSON.parse(localStorage.getItem('pulse_user')||'null');
 let allProfiles={};
 let myTotalLikes=0;
 function compressImage(file,cb,maxW,quality){
-  let r=new FileReader();r.onload=e=>{
-    let img=new Image();img.onload=()=>{
-      let c=document.createElement('canvas');
-      let scale=Math.min(1,maxW/img.width);
-      c.width=img.width*scale;c.height=img.height*scale;
-      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-      cb(c.toDataURL('image/jpeg',quality));
-    };img.src=e.target.result;
-  };r.readAsDataURL(file);
+  let r=new FileReader();
+  r.onload=e=>{
+    let img=new Image();
+    img.onload=()=>{
+      try{
+        let scale=Math.min(1,maxW/img.width);
+        let w=Math.round(img.width*scale);
+        let h=Math.round(img.height*scale);
+        let c=document.createElement('canvas');
+        c.width=w; c.height=h;
+        c.getContext('2d').drawImage(img,0,0,w,h);
+        cb(c.toDataURL('image/jpeg',quality));
+      }catch(err){ cb(e.target.result); }
+    };
+    img.onerror=()=>{ cb(e.target.result); };
+    img.src=e.target.result;
+  };
+  r.onerror=()=>{ alert('Could not read photo'); document.getElementById('publishBtn').disabled=false; };
+  r.readAsDataURL(file);
 }
 function loadProfiles(cb){
   fetch('https://pulse-v2-707c2-default-rtdb.firebaseio.com/profiles.json').then(r=>r.json()).then(d=>{
@@ -51,7 +61,8 @@ function loadProfiles(cb){
     if(currentUser && allProfiles[currentUser.username]){ currentUser=allProfiles[currentUser.username]; localStorage.setItem('pulse_user',JSON.stringify(currentUser)); }
     if(cb)cb();
   }).catch(()=>{if(cb)cb();});
-}function renderProfile(){
+}
+function renderProfile(){
   let a=document.getElementById('profileArea');
   if(!currentUser){
     a.innerHTML=`<div class="card"><h3>Create Your Profile</h3>
@@ -93,7 +104,7 @@ function saveProfile(isEdit){
     currentUser=user;localStorage.setItem('pulse_user',JSON.stringify(user));
     fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/profiles/${username}.json`,{method:'PUT',body:JSON.stringify(user)}).then(()=>{renderProfile();loadFeed();});
   }
-  if(file){compressImage(file,(s)=>doSave(s),600,0.85);} else {doSave('');}
+  if(file){compressImage(file,(s)=>doSave(s),600,0.5);} else {doSave('');}
 }
 let allFeedIds=[];
 let allFeedData={};
@@ -180,7 +191,7 @@ function followUser(author,btn){
     fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/profiles/${author}.json`,{method:'PUT',body:JSON.stringify(them)}).then(()=>renderProfile());
   });
 }
-  function likePost(id,likes,btn){btn.innerText='❤️ '+(likes+1)+' Like';fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PATCH',body:JSON.stringify({likes:likes+1})});}
+function likePost(id,likes,btn){btn.innerText='❤️ '+(likes+1)+' Like';fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PATCH',body:JSON.stringify({likes:likes+1})});}
 function commentPost(id){
   let comment=prompt('Write a comment:');
   if(!comment) return;
@@ -196,9 +207,16 @@ function publishPost(){
   if(!caption && !file) return alert('Write something or pick a photo/video');
   let btn=document.getElementById('publishBtn');
   btn.disabled=true;
-  document.getElementById('publishText').innerText='Publishing...';
-  document.getElementById('bar').style.width='30%';
+  document.getElementById('publishText').innerText='Preparing...';
+  document.getElementById('bar').style.width='10%';
+  function reset(msg){
+    document.getElementById('publishText').innerText=msg||'';
+    document.getElementById('bar').style.width='0%';
+    btn.disabled=false;
+  }
   let done=(media,type)=>{
+    document.getElementById('publishText').innerText='Publishing...';
+    document.getElementById('bar').style.width='30%';
     let id='post_'+Date.now();
     let newPost={author:currentUser.username,authorPic:currentUser.pfp||'https://via.placeholder.com/40',caption:caption,media:media||'',type:type||'',likes:0,comments:[],time:Date.now()};
     fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PUT',body:JSON.stringify(newPost)}).then(()=>{
@@ -209,19 +227,32 @@ function publishPost(){
       btn.disabled=false;
       setTimeout(()=>{document.getElementById('bar').style.width='0%';},1000);
       loadFeed();
-    });
+    }).catch(e=>{ alert('Publish failed: '+e.message); reset('Failed'); });
   };
-  if(file){
-    if(file.type.includes('video')){
+  if(!file){ done('',''); return; }
+  if(file.type.includes('video')){
+    if(file.size > 5*1024*1024){ alert('Video too big! Must be 30 seconds or less and under 5MB. Try a shorter / lower quality video.'); reset(''); return; }
+    let v=document.createElement('video');
+    v.preload='metadata';
+    v.onloadedmetadata=()=>{
+      URL.revokeObjectURL(v.src);
+      if(v.duration > 30){ alert('Video too long! Max 30 seconds. Yours is '+Math.round(v.duration)+' seconds.'); reset(''); return; }
       let r=new FileReader();
       r.onload=()=>done(r.result,file.type);
+      r.onerror=()=>{ alert('Could not read video'); reset(''); };
       r.readAsDataURL(file);
-    } else {
-      compressImage(file,(s)=>done(s,file.type),800,0.6);
-    }
-  } else done('','');
+    };
+    v.onerror=()=>{ alert('Could not read video'); reset(''); };
+    v.src=URL.createObjectURL(file);
+    return;
+  }
+  if(file.type.includes('image')){
+    compressImage(file,(s)=>done(s,file.type),600,0.5);
+    return;
+  }
+  alert('Only photos and videos allowed');
+  reset('');
 }
-// START
 loadProfiles(()=>{ renderProfile(); loadFeed(); });
 </script>
 </body>
