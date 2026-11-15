@@ -21,6 +21,7 @@ input,textarea{width:100%;padding:12px;border-radius:10px;border:none;margin-top
 <textarea id="caption" placeholder="Write caption..."></textarea>
 <button id="publishBtn" onclick="publishPost()">Publish Globally 🚀</button>
 <p id="publishText" style="text-align:center"></p>
+<p style="text-align:center;color:#888;font-size:12px">Videos up to 30 seconds work</p>
 <div id="feed"></div>
 <script>
 const DB = "https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses.json";
@@ -34,17 +35,44 @@ function compressImage(file, cb){
     let img=new Image();
     img.onload=()=>{
       let canvas=document.createElement('canvas');
-      let max=800;
-      let w=img.width, h=img.height;
-      if(w>max){h=h*max/w; w=max;}
-      if(h>max){w=w*max/h; h=max;}
+      let max=800; let w=img.width, h=img.height;
+      if(w>max){h=h*max/w; w=max;} if(h>max){w=w*max/h; h=max;}
       canvas.width=w; canvas.height=h;
       canvas.getContext('2d').drawImage(img,0,0,w,h);
       cb(canvas.toDataURL('image/jpeg',0.7));
+    }; img.src=e.target.result;
+  }; r.readAsDataURL(file);
+}
+function compressVideo(file, cb, onFail){
+  let url=URL.createObjectURL(file);
+  let video=document.createElement('video');
+  video.muted=true; video.playsInline=true; video.src=url;
+  video.onloadedmetadata=()=>{
+    let maxW=360;
+    let scale=Math.min(1, maxW/video.videoWidth);
+    let w=Math.floor(video.videoWidth*scale);
+    let h=Math.floor(video.videoHeight*scale);
+    let canvas=document.createElement('canvas');
+    canvas.width=w; canvas.height=h;
+    let ctx=canvas.getContext('2d');
+    let stream=canvas.captureStream(24);
+    let recorder=new MediaRecorder(stream,{mimeType:'video/webm;codecs=vp9',videoBitsPerSecond:400000});
+    let chunks=[];
+    recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
+    recorder.onstop=()=>{
+      let blob=new Blob(chunks,{type:'video/webm'});
+      if(blob.size>3500000){ onFail(); return; }
+      let r=new FileReader(); r.onload=e=>cb(e.target.result); r.readAsDataURL(blob);
     };
-    img.src=e.target.result;
+    video.onplay=()=>{
+      function draw(){ if(video.ended||video.paused){return;} ctx.drawImage(video,0,0,w,h); requestAnimationFrame(draw); }
+      draw();
+    };
+    video.onended=()=>{ setTimeout(()=>{ try{recorder.stop();}catch(e){} },200); };
+    video.play().then(()=>{ recorder.start(); });
+    setTimeout(()=>{ if(recorder.state!=='inactive'){ try{recorder.stop();}catch(e){} video.pause(); onFail(); } },35000);
   };
-  r.readAsDataURL(file);
+  video.onerror=()=>onFail();
 }
 function publishPost(){
   let btn=document.getElementById('publishBtn');
@@ -63,10 +91,15 @@ function publishPost(){
       document.getElementById('caption').value=''; document.getElementById('fileInput').value='';
       loadFeed();
       setTimeout(()=>{bar.style.width='0%'; txt.innerText='';},2000);
-    }).catch(()=>{ clearInterval(timer); txt.innerText='Failed - photo still too big, try smaller one'; btn.disabled=false; btn.innerText='Publish Globally 🚀'; });
+    }).catch(()=>{ clearInterval(timer); txt.innerText='Failed - try shorter video'; btn.disabled=false; btn.innerText='Publish Globally 🚀'; });
+  }
+  function failVideo(){
+    clearInterval(timer); bar.style.width='0%'; txt.innerText='❌ Video still too big. Try 30 seconds or less.';
+    btn.disabled=false; btn.innerText='Publish Globally 🚀'; btn.style.opacity='1';
   }
   if(file){
-    if(file.type.includes('image')){ compressImage(file, (small)=>{ finish(small,'image/jpeg'); }); }
+    if(file.type.includes('image')){ compressImage(file,(small)=>{ finish(small,'image/jpeg'); }); }
+    else if(file.type.includes('video')){ txt.innerText='Compressing video... please wait'; compressVideo(file,(small)=>{ finish(small,'video/webm'); }, failVideo); }
     else { let r=new FileReader(); r.onload=e=>finish(e.target.result,file.type); r.readAsDataURL(file); }
   } else { finish('',''); }
 }
