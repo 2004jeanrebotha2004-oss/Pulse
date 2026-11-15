@@ -217,7 +217,7 @@ function publishPost(){
       r.onload=()=>done(r.result,file.type);
       r.readAsDataURL(file);
     } else {
-      compressImage(file,(s)=>done(s,file.type),1000,0.8);
+      compressImage(file,(s)=>done(s,file.type),800,0.6);
     }
   } else done('','');
 }
