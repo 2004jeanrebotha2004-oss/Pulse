@@ -4,151 +4,132 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pulse</title>
 <style>
-body{background:#000;color:#fff;font-family:Arial;margin:0;padding:10px;padding-top:15px}
-#bar{height:10px;background:#00ff88;width:0%;position:fixed;top:0;left:0;z-index:9999}
-.card{background:#111;border-radius:15px;padding:10px;margin-top:15px}
-img,video{width:100%;border-radius:12px;margin-top:8px}
-button{border:none;border-radius:10px;padding:10px 15px;font-weight:bold;cursor:pointer}
-input,textarea{width:100%;padding:12px;border-radius:10px;border:none;margin-top:8px;box-sizing:border-box}
-#publishBtn{width:100%;padding:15px;background:#ff0055;color:#fff;font-size:17px;margin-top:10px}
-.pfp{width:40px;height:40px;border-radius:50%;object-fit:cover;margin:0;vertical-align:middle}
-.bigpfp{width:70px;height:70px;border-radius:50%;object-fit:cover;margin:0}
-.profileBox{background:#111;border-radius:15px;padding:12px;display:flex;gap:12px;align-items:center;margin-top:10px}
-.stat{text-align:center;flex:1}
-.stat b{font-size:17px;display:block}
-.stat span{font-size:11px;color:#aaa}
-#setupBox{background:#111;border-radius:15px;padding:15px;margin-top:10px;text-align:center}
+body{background:#000;color:#fff;font-family:Arial;padding:12px;margin:0}
+h1{color:#00ff88;text-align:center}
+.card{background:#111;border:1px solid #222;border-radius:16px;padding:14px;margin:12px 0}
+input,textarea{width:100%;padding:12px;margin:6px 0;background:#222;color:#fff;border:1px solid #333;border-radius:10px;box-sizing:border-box}
+button{background:#00ff88;color:#000;border:0;padding:12px;border-radius:10px;font-weight:700;cursor:pointer}
+button:disabled{opacity:.6}
+img,video{max-width:100%;border-radius:12px}
+.pfp{width:40px;height:40px;border-radius:50%;object-fit:cover}
+.bigpfp{width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid #00ff88}
+#bar{height:8px;background:#00ff88;width:0%;border-radius:10px;transition:width .3s}
+#barWrap{background:#222;border-radius:10px;overflow:hidden;margin:8px 0}
 </style>
 </head>
 <body>
-<div id="bar"></div>
-<h1 style="text-align:center">⚡ PULSE</h1>
-<div id="profileHeader"></div>
-<div id="setupBox" style="display:none">
-<h3>Create Your Profile 👋</h3>
-<input id="newUsername" placeholder="Choose username e.g. thabo_sa">
-<input id="newBio" placeholder="Bio e.g. From Potch 🔥">
-<p style="font-size:12px;color:#aaa">Profile Picture:</p>
-<input type="file" id="newPfp" accept="image/*">
-<button onclick="saveProfile()" style="width:100%;background:#00ff88;color:#000;margin-top:10px;padding:14px">Create Profile ✅</button>
-</div>
-<div id="mainApp">
-<p style="text-align:center;color:#aaa">Everyone Worldwide Will See It</p>
+<h1>⚡ PULSE</h1>
+<div id="profileArea"></div>
+<div class="card">
+<textarea id="caption" placeholder="What's happening?"></textarea>
 <input type="file" id="fileInput" accept="image/*,video/*">
-<textarea id="caption" placeholder="Write caption..."></textarea>
-<button id="publishBtn" onclick="publishPost()">Publish Globally 🚀</button>
-<p id="publishText" style="text-align:center"></p>
-<p style="text-align:center;color:#888;font-size:12px">Videos 30 seconds or less with sound</p>
-<button onclick="loadFeed()" style="width:100%;background:#222;color:#fff;margin-top:5px">🔄 Refresh Feed</button>
-<div id="feed"></div>
+<button id="publishBtn" onclick="publishPost()" style="width:100%">Publish Globally 🚀</button>
+<div id="barWrap"><div id="bar"></div></div>
+<p id="publishText" style="text-align:center;font-size:13px;color:#aaa"></p>
 </div>
+<button onclick="loadFeed()" style="width:100%;background:#222;color:#fff">🔄 Refresh Feed</button>
+<div id="feed"></div>
 <script>
-const DB = "https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses.json";
-const PROFILES = "https://pulse-v2-707c2-default-rtdb.firebaseio.com/profiles.json";
-let currentUser = JSON.parse(localStorage.getItem('pulse_user')||'null');
-let allProfiles = {};
-let myTotalLikes = 0;
-function showSetup(){
-  document.getElementById('setupBox').style.display='block';
-  document.getElementById('mainApp').style.display='none';
-  document.getElementById('profileHeader').innerHTML='';
+const DB='https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses.json';
+let currentUser=JSON.parse(localStorage.getItem('pulse_user')||'null');
+let allProfiles={};
+let myTotalLikes=0;
+function compressImage(file,cb,maxW,quality){
+  let r=new FileReader();r.onload=e=>{
+    let img=new Image();img.onload=()=>{
+      let c=document.createElement('canvas');
+      let scale=Math.min(1,maxW/img.width);
+      c.width=img.width*scale;c.height=img.height*scale;
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      cb(c.toDataURL('image/jpeg',quality));
+    };img.src=e.target.result;
+  };r.readAsDataURL(file);
 }
 function loadProfiles(cb){
-  fetch(PROFILES).then(r=>r.json()).then(d=>{ allProfiles=d||{}; if(cb)cb(); });
+  fetch('https://pulse-v2-707c2-default-rtdb.firebaseio.com/profiles.json').then(r=>r.json()).then(d=>{
+    allProfiles=d||{};
+    if(currentUser && allProfiles[currentUser.username]){ currentUser=allProfiles[currentUser.username]; localStorage.setItem('pulse_user',JSON.stringify(currentUser)); }
+    if(cb)cb();
+  }).catch(()=>{if(cb)cb();});
 }
 function renderProfile(){
-  if(!currentUser){ showSetup(); return; }
-  document.getElementById('setupBox').style.display='none';
-  document.getElementById('mainApp').style.display='block';
-  let me = allProfiles[currentUser.username] || currentUser;
-  let followers = me.followers||[];
-  let following = me.following||[];
-  document.getElementById('profileHeader').innerHTML = `
-  <div class="profileBox">
-    <img class="bigpfp" src="${me.pfp||'https://via.placeholder.com/70'}">
-    <div style="flex:1">
-      <b>@${me.username}</b><br><span style="font-size:12px;color:#aaa">${me.bio||''}</span>
-      <div style="display:flex;margin-top:8px">
-        <div class="stat" onclick="showFollowers()"><b>${followers.length}</b><span>Followers</span></div>
-        <div class="stat" onclick="showFollowing()"><b>${following.length}</b><span>Following</span></div>
-        <div class="stat"><b id="myLikesCount">${myTotalLikes}</b><span>Likes</span></div>
-        <div class="stat"><b id="myPostsCount">0</b><span>Posts</span></div>
-      </div>
-    </div>
-    <button onclick="editProfile()" style="background:#222;color:#fff;padding:8px">Edit</button>
-  </div>`;
-}
-function showFollowers(){
-  let me = allProfiles[currentUser.username]||currentUser;
-  let list = (me.followers||[]).join('\n@')||'No followers yet';
-  alert('Your Followers:\n@'+list);
-}
-function showFollowing(){
-  let me = allProfiles[currentUser.username]||currentUser;
-  let list = (me.following||[]).join('\n@')||'Not following anyone yet';
-  alert('You Follow:\n@'+list);
-}
-function editProfile(){
-  if(confirm('Change profile picture / username?')){
-    localStorage.removeItem('pulse_user');
-    location.reload();
+  let a=document.getElementById('profileArea');
+  if(!currentUser){
+    a.innerHTML=`<div class="card"><h3>Create Your Profile</h3>
+    <input id="newUsername" placeholder="Choose username (no spaces)">
+    <input id="newBio" placeholder="Your bio...">
+    <p style="font-size:13px;color:#aaa">Profile photo:</p>
+    <input type="file" id="newPfp" accept="image/*">
+    <button onclick="saveProfile()" style="width:100%">Create Profile ✅</button></div>`;
+    return;
   }
-}
-function compressImage(file, cb, maxSize, quality){
-  let max = maxSize || 1280;
-  let q = quality || 0.88;
-  let r=new FileReader();
-  r.onload=e=>{let img=new Image();img.onload=()=>{
-    let canvas=document.createElement('canvas');
-    let w=img.width,h=img.height;
-    if(w>max){h=h*max/w;w=max;}
-    if(h>max){w=w*max/h;h=max;}
-    canvas.width=w;canvas.height=h;
-    canvas.getContext('2d').drawImage(img,0,0,w,h);
-    cb(canvas.toDataURL('image/jpeg',q));
-  };img.src=e.target.result;};r.readAsDataURL(file);
-}
-function saveProfile(){
-  let username=document.getElementById('newUsername').value.trim().replace('@','').replace(/\s/g,'_').toLowerCase();
-  let bio=document.getElementById('newBio').value;
-  let file=document.getElementById('newPfp').files[0];
-  if(!username){alert('Choose a username');return;}
-  if(username.length<3){alert('Username too short');return;}
-  function finish(pfp){
-    let user={username,bio,pfp:pfp||'',followers:[],following:[]};
-    fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/profiles/${username}.json`,{method:'PUT',body:JSON.stringify(user)}).then(()=>{
-      localStorage.setItem('pulse_user',JSON.stringify(user));
-      currentUser=user;
-      loadProfiles(()=>{renderProfile();loadFeed();});
-    });
-  }
-  if(file){ compressImage(file,finish,500,0.9); } else { finish(''); }
-}function loadFeed(){
+  let followers=(currentUser.followers||[]).length;
+  let following=(currentUser.following||[]).length;
+  a.innerHTML=`<div class="card" style="text-align:center">
+  <img class="bigpfp"let allFeedIds=[];
+let allFeedData={};
+let feedShown=0;
+function loadFeed(){
+  let feed=document.getElementById('feed');
+  feed.innerHTML='<p style="text-align:center;color:#aaa">Loading feed... ⚡</p>';
+  feedShown=0;
   fetch(DB).then(r=>r.json()).then(data=>{
-    let feed=document.getElementById('feed');feed.innerHTML='';
-    if(!data)return;
-    let myPosts=0; myTotalLikes=0;
-    Object.keys(data).reverse().forEach(id=>{
-      let p=data[id];
-      let author=p.author||'pulse_user';
-      let authorPic=p.authorPic||'https://via.placeholder.com/40';
-      let isMe = currentUser && author===currentUser.username;
-      if(isMe){ myPosts++; myTotalLikes+= (p.likes||0); }
-      let meFollowing = currentUser && allProfiles[currentUser.username] ? (allProfiles[currentUser.username].following||[]) : [];
-      let isFollowing = meFollowing.includes(author);
-      let followBtn = !currentUser ? '' : isMe ? '<span style="font-size:12px;color:#888">• You</span>' : `<button onclick="followUser('${author}',this)" style="padding:6px 10px;background:${isFollowing?'#222':'#00ff88'};color:${isFollowing?'#fff':'#000'};font-size:12px">${isFollowing?'✓ Following':'＋ Follow'}</button>`;
-      feed.innerHTML+=`<div class="card">
-        <div style="display:flex;align-items:center;gap:8px">
-          <img class="pfp" src="${authorPic}"><b>@${author}</b> ${followBtn}
-        </div>
-        <p>${p.caption||''}</p>
-        ${p.media?(p.type&&p.type.includes('video')?`<video src="${p.media}" controls playsinline preload="none"></video>`:`<img src="${p.media}">`):''}
-        <br><br><button onclick="likePost('${id}',${p.likes||0},this)">❤️ ${p.likes||0} Like</button> <button onclick="commentPost('${id}')">💬 Comment</button>
-        <div>${(p.comments||[]).map(c=>`<p>💬 ${c}</p>`).join('')}</div></div>`;
-    });
-    let likesEl=document.getElementById('myLikesCount'); if(likesEl) likesEl.innerText=myTotalLikes;
-    let postsEl=document.getElementById('myPostsCount'); if(postsEl) postsEl.innerText=myPosts;
+    feed.innerHTML='';
+    if(!data){feed.innerHTML='<p style="text-align:center">No posts yet - be first!</p>';return;}
+    allFeedData=data;
+    allFeedIds=Object.keys(data).reverse();
+    renderNextBatch();
   });
+}
+function renderNextBatch(){
+  let feed=document.getElementById('feed');
+  let oldBtn=document.getElementById('loadMoreBtn');
+  if(oldBtn) oldBtn.remove();
+  let myPosts=0; myTotalLikes=0;
+  Object.keys(allFeedData).forEach(id=>{
+    let p=allFeedData[id];
+    if(currentUser && p.author===currentUser.username){ myPosts++; myTotalLikes+=(p.likes||0); }
+  });
+  let likesEl=document.getElementById('myLikesCount'); if(likesEl) likesEl.innerText=myTotalLikes;
+  let postsEl=document.getElementById('myPostsCount'); if(postsEl) postsEl.innerText=myPosts;
+  let batch = allFeedIds.slice(feedShown, feedShown+10);
+  batch.forEach(id=>{
+    let p=allFeedData[id];
+    let author=p.author||'pulse_user';
+    let authorPic=p.authorPic||'https://via.placeholder.com/40';
+    let isMe = currentUser && author===currentUser.username;
+    let meFollowing = currentUser && allProfiles[currentUser.username] ? (allProfiles[currentUser.username].following||[]) : [];
+    let isFollowing = meFollowing.includes(author);
+    let followBtn = !currentUser ? '' : isMe ? '<span style="font-size:12px;color:#888">• You</span>' : `<button onclick="followUser('${author}',this)" style="padding:6px 10px;background:${isFollowing?'#222':'#00ff88'};color:${isFollowing?'#fff':'#000'};font-size:12px">${isFollowing?'✓ Following':'＋ Follow'}</button>`;
+    let deleteBtn = isMe ? `<button onclick="deletePost('${id}')" style="padding:6px 10px;background:#ff0055;color:#fff;font-size:12px;margin-left:auto">🗑️ Delete</button>` : '';
+    let mediaHtml='';
+    if(p.media){
+      if(p.type&&p.type.includes('video')) mediaHtml=`<video src="${p.media}" controls playsinline preload="none" style="width:100%;border-radius:12px;margin-top:8px"></video>`;
+      else mediaHtml=`<img src="${p.media}" loading="lazy" style="width:100%;border-radius:12px;margin-top:8px">`;
+    }
+    feed.innerHTML+=`<div class="card">
+      <div style="display:flex;align-items:center;gap:8px">
+        <img class="pfp" src="${authorPic}" loading="lazy"><b>@${author}</b> ${followBtn} ${deleteBtn}
+      </div>
+      <p>${p.caption||''}</p>
+      ${mediaHtml}
+      <br><br><button onclick="likePost('${id}',${p.likes||0},this)">❤️ ${p.likes||0} Like</button> <button onclick="commentPost('${id}')">💬 Comment</button>
+      <div>${(p.comments||[]).map(c=>`<p>💬 ${c}</p>`).join('')}</div></div>`;
+  });
+  feedShown+=batch.length;
+  if(feedShown < allFeedIds.length){
+    feed.innerHTML+=`<button id="loadMoreBtn" onclick="renderNextBatch()" style="width:100%;background:#222;color:#fff;margin-top:10px">Load More ⬇️</button>`;
+  }
+}
+window.addEventListener('scroll', ()=>{
+  if((window.innerHeight + window.scrollY) >= document.body.scrollHeight - 500){
+    let btn=document.getElementById('loadMoreBtn');
+    if(btn) renderNextBatch();
+  }
+});
+function deletePost(id){
+  if(!confirm('Delete this post? This cannot be undone.')) return;
+  fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'DELETE'}).then(()=>{ loadFeed(); });
 }
 function followUser(author,btn){
   if(!currentUser){alert('Create a profile first');return;}
