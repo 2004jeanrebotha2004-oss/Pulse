@@ -12,7 +12,6 @@ body{background:#0a0a0a;color:#fff;padding-bottom:80px}
 .top p{font-size:12px;opacity:.9}
 .livebar{display:flex;justify-content:center;gap:12px;padding:10px;background:#111;font-size:13px;flex-wrap:wrap;border-bottom:1px solid #222}
 .livebar b{color:#00ff88}
-.livebar .online-dot{color:#00ff88}
 .search{padding:12px}
 .search input{width:100%;padding:13px;border-radius:12px;border:none;background:#1c1c1c;color:#fff;font-size:15px;outline:none}
 .cats{display:flex;gap:8px;overflow-x:auto;padding:0 12px 10px}
@@ -22,16 +21,24 @@ body{background:#0a0a0a;color:#fff;padding-bottom:80px}
 .post-box h3{margin-bottom:10px;font-size:16px}
 .post-box input,.post-box select,.post-box textarea{width:100%;padding:11px;margin-bottom:8px;border-radius:10px;border:none;background:#222;color:#fff;outline:none}
 .post-box button{width:100%;padding:13px;background:#ff2d55;border:none;color:#fff;font-weight:bold;border-radius:10px;font-size:15px;cursor:pointer}
+.upload-box{border:2px dashed #ff2d55;border-radius:12px;padding:14px;text-align:center;margin-bottom:8px;background:#1a0f14;cursor:pointer}
+.upload-box p{font-size:13px;line-height:1.4}
+.upload-box span{color:#ff2d55;font-weight:bold}
+.preview{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.preview img{width:62px;height:62px;object-fit:cover;border-radius:8px;border:2px solid #333}
+.preview .count{width:62px;height:62px;border-radius:8px;background:#222;display:flex;align-items:center;justify-content:center;font-size:12px;color:#00ff88;font-weight:bold}
 .safety{margin:12px;background:#0f2a1a;border:1px solid #00ff88;border-radius:14px;padding:12px;font-size:13px;line-height:1.5}
 .safety b{color:#00ff88}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px}
 .card{background:#161616;border-radius:14px;overflow:hidden;border:1px solid #222}
-.card img{width:100%;height:150px;object-fit:cover;background:#222}
+.card .main-img{width:100%;height:150px;object-fit:cover;background:#222}
 .card-body{padding:10px}
 .card-body h4{font-size:14px;margin-bottom:4px}
 .price{color:#00ff88;font-weight:bold;font-size:16px}
 .loc{font-size:12px;color:#aaa;margin:4px 0}
 .stars{color:#ffcc00;font-size:13px}
+.thumbs{display:flex;gap:4px;margin-top:6px}
+.thumbs img{width:32px;height:32px;object-fit:cover;border-radius:5px;cursor:pointer;border:1px solid #333}
 .card button{width:100%;margin-top:8px;padding:9px;border-radius:8px;border:none;background:#ff2d55;color:#fff;font-weight:bold;cursor:pointer}
 .card .safe-btn{background:#222;border:1px solid #00ff88;color:#00ff88;margin-top:5px}
 .footer{text-align:center;padding:20px;color:#777;font-size:12px}
@@ -46,12 +53,12 @@ body{background:#0a0a0a;color:#fff;padding-bottom:80px}
 
 <div class="livebar">
 <span>👁️ <b id="visits">...</b> Visits</span>
-<span><span class="online-dot">●</span> <b id="online">3</b> Online Now</span>
+<span>🟢 <b id="online">3</b> Online Now</span>
 <span>📦 <b id="listingCount">0</b> Live Listings</span>
 </div>
 
 <div class="search">
-<input id="searchInput" placeholder="🔍 Search sneakers, nails, food, phones..." oninput="render()">
+<input id="searchInput" placeholder="🔍 Search cars, electronics, sneakers, nails..." oninput="render()">
 </div>
 
 <div class="cats" id="cats">
@@ -60,104 +67,73 @@ body{background:#0a0a0a;color:#fff;padding-bottom:80px}
 <button onclick="setCat('Nails',this)">💅 Nails</button>
 <button onclick="setCat('Sneakers',this)">👟 Sneakers</button>
 <button onclick="setCat('Phones',this)">📱 Phones</button>
+<button onclick="setCat('Electronics',this)">💻 Electronics</button>
+<button onclick="setCat('Cars',this)">🚗 Cars</button>
 <button onclick="setCat('Clothes',this)">👕 Clothes</button>
 <button onclick="setCat('Hair',this)">💇 Hair</button>
 </div>
 
 <div class="post-box">
 <h3>➕ Post Your Hustle - FREE</h3>
-<input id="pTitle" placeholder="What are you selling? e.g. Nike Air Force 1">
-<input id="pPrice" placeholder="Price e.g. 850" type="number">
+<input id="pTitle" placeholder="What are you selling? e.g. VW Polo 1.4">
+<input id="pPrice" placeholder="Price e.g. 85000" type="number">
 <input id="pLoc" placeholder="Location e.g. Viljoenskroon">
 <input id="pPhone" placeholder="WhatsApp Number e.g. 0821234567">
-<select id="pCat"><option>Food</option><option>Nails</option><option>Sneakers</option><option>Phones</option><option>Clothes</option><option>Hair</option></select>
-<input id="pImg" placeholder="Image link (optional) - paste image URL">
+<select id="pCat"><option>Food</option><option>Nails</option><option>Sneakers</option><option>Phones</option><option>Electronics</option><option>Cars</option><option>Clothes</option><option>Hair</option></select>
+
+<div class="upload-box" onclick="document.getElementById('pFiles').click()">
+<p><span>📸 TAP TO ADD PHOTOS</span><br>Minimum <b>5 photos</b> required<br>Pick from gallery / camera<br><small id="photoStatus">0 / 5 photos added</small></p>
+<input type="file" id="pFiles" accept="image/*" multiple hidden onchange="handlePhotos(this)">
+</div>
+<div class="preview" id="preview"></div>
+
 <button onclick="addListing()">POST NOW →</button>
-<p style="font-size:11px;color:#888;margin-top:8px;text-align:center">Your listing stays on your phone + shows to everyone</p>
+<p style="font-size:11px;color:#888;margin-top:8px;text-align:center">Buyers trust listings with 5+ photos way more</p>
 </div>
 
 <div class="safety">
-<b>🛡️ SAFE TRADE - How Not To Get Scammed:</b><br>
+<b>🛡️ SAFE TRADE:</b><br>
 1. Meet in public, never send money first<br>
-2. Check seller stars below<br>
-3. Use WhatsApp only after you agree<br>
-4. Report scams - we block them fast
+2. Check seller stars<br>
+3. For CARS: Check papers + test drive before paying
 </div>
 
 <div class="grid" id="grid"></div>
-
 <div class="footer">PULSE • Made in Viljoenskroon 🇿🇦 • Global<br>https://pulse-v3-liart.vercel.app</div>
 
 <script>
 let listings = JSON.parse(localStorage.getItem('pulse_listings')||'[]');
+let tempPhotos = [];
 if(listings.length===0){
   listings=[
-    {title:"Nike Air Force 1 - White",price:850,loc:"Viljoenskroon",cat:"Sneakers",phone:"0821234567",img:"https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500",rating:4.8,rates:24},
-    {title:"Full Set Nails + Design",price:250,loc:"Orkney",cat:"Nails",phone:"0821234567",img:"https://images.unsplash.com/photo-1604654894610-df63bc536371?w=500",rating:4.9,rates:31},
-    {title:"Kota + Chips - Best in Town",price:45,loc:"Klerksdorp",cat:"Food",phone:"0821234567",img:"https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=500",rating:4.7,rates:18},
-    {title:"iPhone 11 - Clean, 64GB",price:4500,loc:"Matlosana",cat:"Phones",phone:"0821234567",img:"https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=500",rating:4.6,rates:12},
+    {title:"VW Polo 1.4 - 2018, Clean",price:89900,loc:"Klerksdorp",cat:"Cars",phone:"0821234567",images:["https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=500","https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=500","https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=500","https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=500","https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=500"],rating:4.9,rates:32},
+    {title:"PS5 + 2 Controllers",price:9500,loc:"Matlosana",cat:"Electronics",phone:"0821234567",images:["https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=500","https://images.unsplash.com/photo-1622297845775-5ff3fef71d13?w=500","https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=500","https://images.unsplash.com/photo-1592840496694-26d035b52b48?w=500","https://images.unsplash.com/photo-1486401899868-0e435ed85128?w=500"],rating:4.8,rates:21},
+    {title:"Nike Air Force 1 - White",price:850,loc:"Viljoenskroon",cat:"Sneakers",phone:"0821234567",images:["https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500","https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=500","https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?w=500","https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=500","https://images.unsplash.com/photo-1605348532760-6753d2c43329?w=500"],rating:4.8,rates:24},
+    {title:"Full Set Nails + Design",price:250,loc:"Orkney",cat:"Nails",phone:"0821234567",images:["https://images.unsplash.com/photo-1604654894610-df63bc536371?w=500","https://images.unsplash.com/photo-1632345031435-8727f6897d53?w=500","https://images.unsplash.com/photo-1604654894610-df63bc536371?w=500","https://images.unsplash.com/photo-1610992015732-2449b76344bc?w=500","https://images.unsplash.com/photo-1583209814681-9c1e5a6d2b9d?w=500"],rating:4.9,rates:31},
   ];
   localStorage.setItem('pulse_listings',JSON.stringify(listings));
 }
 let currentCat='All';
-function setCat(c,el){
-  currentCat=c;
-  document.querySelectorAll('.cats button').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active'); render();
-}
+function setCat(c,el){ currentCat=c; document.querySelectorAll('.cats button').forEach(b=>b.classList.remove('active')); el.classList.add('active'); render(); }
 function stars(r){ let s=''; for(let i=1;i<=5;i++) s+= i<=Math.round(r)?'★':'☆'; return s; }
+function handlePhotos(input){
+  let files = Array.from(input.files);
+  if(tempPhotos.length + files.length > 8) return alert("Max 8 photos");
+  files.forEach(f=>{
+    let reader = new FileReader();
+    reader.onload = e=>{
+      tempPhotos.push(e.target.result);
+      updatePreview();
+    };
+    reader.readAsDataURL(f);
+  });
+}
+function updatePreview(){
+  document.getElementById('photoStatus').innerText = tempPhotos.length + " / 5 photos added" + (tempPhotos.length>=5 ? " ✅ Ready!" : " - Need " + (5-tempPhotos.length) + " more");
+  document.getElementById('preview').innerHTML = tempPhotos.map((p,i)=>`<img src="${p}" onclick="tempPhotos.splice(${i},1);updatePreview()">`).join('') + `<div class="count">${tempPhotos.length}/5</div>`;
+  document.getElementById('photoStatus').style.color = tempPhotos.length>=5 ? '#00ff88' : '#fff';
+}
 function render(){
   let q=document.getElementById('searchInput').value.toLowerCase();
   let filtered=listings.filter(l=>(currentCat==='All'||l.cat===currentCat)&&(l.title.toLowerCase().includes(q)||l.loc.toLowerCase().includes(q)));
-  document.getElementById('listingCount').innerText=listings.length;
-  document.getElementById('grid').innerHTML=filtered.map((l,i)=>`
-    <div class="card">
-      <img src="${l.img||'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=500'}">
-      <div class="card-body">
-        <h4>${l.title}</h4>
-        <div class="price">R${l.price}</div>
-        <div class="loc">📍 ${l.loc} • ${l.cat}</div>
-        <div class="stars">${stars(l.rating)} ${l.rating} (${l.rates} reviews)</div>
-        <button onclick="window.open('https://wa.me/27${l.phone.replace(/^0/,'')}?text=${encodeURIComponent('Hi! I saw '+l.title+' on PULSE for R'+l.price)}','_blank')">💬 WhatsApp Seller</button>
-        <button class="safe-btn" onclick="alert('SAFE TRADE:\\nMeet in public. Check item before paying. Never send money first.')">🛡️ Safe Trade</button>
-        <button style="background:#222" onclick="rateSeller(${i})">⭐ Rate Seller</button>
-      </div>
-    </div>`).join('') || '<p style="text-align:center;padding:20px;color:#888">No listings yet. Be the first to post!</p>';
-}
-function rateSeller(i){
-  let r=prompt("Rate this seller 1-5 stars:");
-  if(!r) return; r=parseFloat(r); if(r<1||r>5) return alert("Enter 1-5");
-  let l=listings[i]; l.rating=((l.rating*l.rates)+r)/(l.rates+1); l.rates++; l.rating=Math.round(l.rating*10)/10;
-  localStorage.setItem('pulse_listings',JSON.stringify(listings)); render(); alert("Thanks! Seller now "+l.rating+" stars ⭐");
-}
-function addListing(){
-  let t=document.getElementById('pTitle').value, p=document.getElementById('pPrice').value, loc=document.getElementById('pLoc').value, ph=document.getElementById('pPhone').value, cat=document.getElementById('pCat').value, img=document.getElementById('pImg').value;
-  if(!t||!p||!loc||!ph) return alert("Fill title, price, location & WhatsApp");
-  listings.unshift({title:t,price:parseFloat(p),loc:loc,cat:cat,phone:ph,img:img,rating:5,rates:1});
-  localStorage.setItem('pulse_listings',JSON.stringify(listings));
-  document.getElementById('pTitle').value=''; document.getElementById('pPrice').value=''; document.getElementById('pLoc').value=''; document.getElementById('pPhone').value=''; document.getElementById('pImg').value='';
-  render(); alert("🔥 Your listing is LIVE on PULSE!");
-}
-render();
-
-// --- LIVE VISITS ---
-fetch('https://api.countapi.xyz/hit/pulse-v3-liart/visits')
-.then(r=>r.json()).then(d=>{ document.getElementById('visits').innerText=d.value; })
-.catch(()=>{ document.getElementById('visits').innerText='1,200+'; });
-
-// --- ONLINE NOW (live-feeling, updates every 8 sec) ---
-fetch('https://api.countapi.xyz/get/pulse-v3-liart/visits')
-.then(r=>r.json()).then(d=>{
-  let base=Math.min(18, 2+Math.floor((d.value||50)/15));
-  document.getElementById('online').innerText=base+Math.floor(Math.random()*4);
-  setInterval(()=>{
-    let el=document.getElementById('online');
-    let n=parseInt(el.innerText)+(Math.random()>0.5?1:-1);
-    if(n<1)n=1; if(n>32)n=32; el.innerText=n;
-  },8000);
-}).catch(()=>{
-  document.getElementById('online').innerText='5';
-});
-</script>
-</body>
-</html>
+  document.getElement
