@@ -21,11 +21,11 @@ input,textarea{width:100%;padding:12px;border-radius:10px;border:none;margin-top
 <textarea id="caption" placeholder="Write caption..."></textarea>
 <button id="publishBtn" onclick="publishPost()">Publish Globally 🚀</button>
 <p id="publishText" style="text-align:center"></p>
-<p style="text-align:center;color:#888;font-size:12px">Videos up to 30 seconds work</p>
+<p style="text-align:center;color:#888;font-size:12px">Videos up to 30 seconds with sound</p>
 <div id="feed"></div>
 <script>
 const DB = "https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses.json";
-function loadFeed(){fetch(DB).then(r=>r.json()).then(data=>{let feed=document.getElementById('feed');feed.innerHTML='';if(!data)return;Object.keys(data).reverse().forEach(id=>{let p=data[id];feed.innerHTML+=`<div class="card"><b>@pulse_user</b><p>${p.caption||''}</p>${p.media?(p.type&&p.type.includes('video')?`<video src="${p.media}" controls></video>`:`<img src="${p.media}">`):''}<br><br><button onclick="likePost('${id}',${p.likes||0})">❤️ ${p.likes||0} Like</button> <button onclick="commentPost('${id}')">💬 Comment</button><div>${(p.comments||[]).map(c=>`<p>💬 ${c}</p>`).join('')}</div></div>`;});});}
+function loadFeed(){fetch(DB).then(r=>r.json()).then(data=>{let feed=document.getElementById('feed');feed.innerHTML='';if(!data)return;Object.keys(data).reverse().forEach(id=>{let p=data[id];feed.innerHTML+=`<div class="card"><b>@pulse_user</b><p>${p.caption||''}</p>${p.media?(p.type&&p.type.includes('video')?`<video src="${p.media}" controls playsinline></video>`:`<img src="${p.media}">`):''}<br><br><button onclick="likePost('${id}',${p.likes||0})">❤️ ${p.likes||0} Like</button> <button onclick="commentPost('${id}')">💬 Comment</button><div>${(p.comments||[]).map(c=>`<p>💬 ${c}</p>`).join('')}</div></div>`;});});}
 loadFeed();setInterval(loadFeed,5000);
 function likePost(id,likes){fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PATCH',body:JSON.stringify({likes:likes+1})}).then(()=>loadFeed());}
 function commentPost(id){let t=prompt("Write comment:");if(!t)return;fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`).then(r=>r.json()).then(p=>{let c=p.comments||[];c.push(t);fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PATCH',body:JSON.stringify({comments:c})}).then(()=>loadFeed());});}
@@ -46,31 +46,57 @@ function compressImage(file, cb){
 function compressVideo(file, cb, onFail){
   let url=URL.createObjectURL(file);
   let video=document.createElement('video');
-  video.muted=true; video.playsInline=true; video.src=url;
+  video.muted=false; video.volume=1; video.playsInline=true; video.src=url;
   video.onloadedmetadata=()=>{
-    let maxW=360;
+    if(video.duration>32){ onFail(); return; }
+    let maxW=480;
     let scale=Math.min(1, maxW/video.videoWidth);
     let w=Math.floor(video.videoWidth*scale);
     let h=Math.floor(video.videoHeight*scale);
     let canvas=document.createElement('canvas');
     canvas.width=w; canvas.height=h;
     let ctx=canvas.getContext('2d');
-    let stream=canvas.captureStream(24);
-    let recorder=new MediaRecorder(stream,{mimeType:'video/webm;codecs=vp9',videoBitsPerSecond:400000});
+    let canvasStream=canvas.captureStream(24);
+    // --- AUDIO FIX ---
+    let audioCtx=null; let dest=null;
+    try{
+      audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+      let src=audioCtx.createMediaElementSource(video);
+      dest=audioCtx.createMediaStreamDestination();
+      src.connect(dest);
+      // keep sound silent while compressing but still record it
+      let gain=audioCtx.createGain(); gain.gain.value=0;
+      src.connect(gain); gain.connect(audioCtx.destination);
+    }catch(e){}
+    let tracks=[...canvasStream.getVideoTracks()];
+    if(dest) tracks.push(...dest.stream.getAudioTracks());
+    let combined=new MediaStream(tracks);
+    let recorder=new MediaRecorder(combined,{mimeType:'video/webm;codecs=vp9,opus',videoBitsPerSecond:600000,audioBitsPerSecond:64000});
     let chunks=[];
     recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
     recorder.onstop=()=>{
       let blob=new Blob(chunks,{type:'video/webm'});
       if(blob.size>3500000){ onFail(); return; }
       let r=new FileReader(); r.onload=e=>cb(e.target.result); r.readAsDataURL(blob);
+      if(audioCtx) audioCtx.close();
     };
-    video.onplay=()=>{
-      function draw(){ if(video.ended||video.paused){return;} ctx.drawImage(video,0,0,w,h); requestAnimationFrame(draw); }
-      draw();
-    };
-    video.onended=()=>{ setTimeout(()=>{ try{recorder.stop();}catch(e){} },200); };
-    video.play().then(()=>{ recorder.start(); });
-    setTimeout(()=>{ if(recorder.state!=='inactive'){ try{recorder.stop();}catch(e){} video.pause(); onFail(); } },35000);
+    let rafId=null;
+    function draw(){
+      if(video.ended||video.paused) return;
+      ctx.drawImage(video,0,0,w,h);
+      rafId=requestAnimationFrame(draw);
+    }
+    video.onplay=()=>{ draw(); };
+    video.onended=()=>{ if(rafId) cancelAnimationFrame(rafId); setTimeout(()=>{ try{recorder.stop();}catch(e){} },300); };
+    video.onerror=()=>onFail();
+    // Start recording when video actually starts playing
+    video.currentTime=0;
+    video.play().then(()=>{
+      if(audioCtx && audioCtx.state==='suspended') audioCtx.resume();
+      recorder.start(250);
+    }).catch(()=>onFail());
+    // Safety: stop after duration + 2 sec
+    setTimeout(()=>{ if(recorder.state!=='inactive'){ try{recorder.stop();}catch(e){} video.pause(); } }, (video.duration*1000)+3000);
   };
   video.onerror=()=>onFail();
 }
@@ -83,7 +109,7 @@ function publishPost(){
   btn.disabled=true; btn.innerText='Publishing... Please Wait ⏳'; btn.style.opacity='0.6';
   txt.innerText='Uploading 10%...'; bar.style.width='10%';
   let p=10;
-  let timer=setInterval(()=>{p+=15; if(p>=90){p=90; clearInterval(timer); txt.innerText='Almost done 90%...';} else {txt.innerText='Uploading '+p+'%...';} bar.style.width=p+'%';},300);
+  let timer=setInterval(()=>{p+=10; if(p>=90){p=90; clearInterval(timer); txt.innerText='Almost done 90%...';} else {txt.innerText='Uploading '+p+'%...';} bar.style.width=p+'%';},400);
   function finish(media,type){
     fetch(DB,{method:'POST',body:JSON.stringify({caption,media:media||'',type:type||'',likes:0,comments:[]})}).then(()=>{
       clearInterval(timer); bar.style.width='100%'; txt.innerText='Published 100% ✓';
@@ -99,7 +125,7 @@ function publishPost(){
   }
   if(file){
     if(file.type.includes('image')){ compressImage(file,(small)=>{ finish(small,'image/jpeg'); }); }
-    else if(file.type.includes('video')){ txt.innerText='Compressing video... please wait'; compressVideo(file,(small)=>{ finish(small,'video/webm'); }, failVideo); }
+    else if(file.type.includes('video')){ txt.innerText='Compressing video with sound... please wait, do not close'; compressVideo(file,(small)=>{ finish(small,'video/webm'); }, failVideo); }
     else { let r=new FileReader(); r.onload=e=>finish(e.target.result,file.type); r.readAsDataURL(file); }
   } else { finish('',''); }
 }
