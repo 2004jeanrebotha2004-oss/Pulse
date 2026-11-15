@@ -22,11 +22,13 @@ input,textarea{width:100%;padding:12px;border-radius:10px;border:none;margin-top
 <button id="publishBtn" onclick="publishPost()">Publish Globally 🚀</button>
 <p id="publishText" style="text-align:center"></p>
 <p style="text-align:center;color:#888;font-size:12px">Videos up to 30 seconds with sound</p>
+<button onclick="loadFeed()" style="width:100%;background:#222;color:#fff;margin-top:5px">🔄 Refresh Feed</button>
 <div id="feed"></div>
 <script>
 const DB = "https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses.json";
 function loadFeed(){fetch(DB).then(r=>r.json()).then(data=>{let feed=document.getElementById('feed');feed.innerHTML='';if(!data)return;Object.keys(data).reverse().forEach(id=>{let p=data[id];feed.innerHTML+=`<div class="card"><b>@pulse_user</b><p>${p.caption||''}</p>${p.media?(p.type&&p.type.includes('video')?`<video src="${p.media}" controls playsinline preload="metadata"></video>`:`<img src="${p.media}">`):''}<br><br><button onclick="likePost('${id}',${p.likes||0})">❤️ ${p.likes||0} Like</button> <button onclick="commentPost('${id}')">💬 Comment</button><div>${(p.comments||[]).map(c=>`<p>💬 ${c}</p>`).join('')}</div></div>`;});});}
-loadFeed();setInterval(loadFeed,5000);
+loadFeed();
+// NO auto-refresh anymore - this was restarting your videos every 5 seconds
 function likePost(id,likes){fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PATCH',body:JSON.stringify({likes:likes+1})}).then(()=>loadFeed());}
 function commentPost(id){let t=prompt("Write comment:");if(!t)return;fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`).then(r=>r.json()).then(p=>{let c=p.comments||[];c.push(t);fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PATCH',body:JSON.stringify({comments:c})}).then(()=>loadFeed());});}
 function compressImage(file, cb){
@@ -34,7 +36,6 @@ function compressImage(file, cb){
   r.onload=e=>{let img=new Image();img.onload=()=>{let canvas=document.createElement('canvas');let max=800;let w=img.width,h=img.height;if(w>max){h=h*max/w;w=max;}if(h>max){w=w*max/h;h=max;}canvas.width=w;canvas.height=h;canvas.getContext('2d').drawImage(img,0,0,w,h);cb(canvas.toDataURL('image/jpeg',0.7));};img.src=e.target.result;};r.readAsDataURL(file);
 }
 function compressVideo(file, cb, onFail){
-  // If file already small, upload original - keeps 100% quality + sound + full length
   if(file.size < 3500000){
     let r=new FileReader(); r.onload=e=>cb(e.target.result); r.readAsDataURL(file); return;
   }
@@ -52,11 +53,7 @@ function compressVideo(file, cb, onFail){
     let recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:700000,audioBitsPerSecond:64000});
     let chunks=[]; let stopped=false;
     recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
-    function doStop(){
-      if(stopped) return; stopped=true;
-      try{recorder.stop();}catch(e){}
-      video.pause();
-    }
+    function doStop(){ if(stopped) return; stopped=true; try{recorder.stop();}catch(e){} video.pause(); }
     recorder.onstop=()=>{
       video.remove();
       let blob=new Blob(chunks,{type:'video/webm'});
@@ -67,7 +64,6 @@ function compressVideo(file, cb, onFail){
     video.onerror=()=>{ video.remove(); onFail(); };
     video.currentTime=0;
     video.play().then(()=>{ recorder.start(250); }).catch(()=>{ video.remove(); onFail(); });
-    // Safety: only stop AFTER full duration + 2 sec, never before
     setTimeout(doStop, (video.duration*1000)+2000);
   };
   video.onerror=()=>{ video.remove(); onFail(); };
