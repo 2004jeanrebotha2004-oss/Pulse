@@ -4,10 +4,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pulse</title>
 <style>
-body{background:#000;color:#fff;font-family:Arial;padding:12px;margin:0}
-h1{color:#00ff88;text-align:center}
+body{background:#000;color:#fff;font-family:Arial;padding:12px;padding-bottom:80px;margin:0}
+h1{color:#00ff88;text-align:center;margin:8px 0}
 .card{background:#111;border:1px solid #222;border-radius:16px;padding:14px;margin:12px 0}
-input,textarea{width:100%;padding:12px;margin:6px 0;background:#222;color:#fff;border:1px solid #333;border-radius:10px;box-sizing:border-box}
+input,textarea,select{width:100%;padding:12px;margin:6px 0;background:#222;color:#fff;border:1px solid #333;border-radius:10px;box-sizing:border-box}
 button{background:#00ff88;color:#000;border:0;padding:12px;border-radius:10px;font-weight:700;cursor:pointer}
 button:disabled{opacity:.6}
 img,video{max-width:100%;border-radius:12px}
@@ -15,25 +15,110 @@ img,video{max-width:100%;border-radius:12px}
 .bigpfp{width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid #00ff88}
 #bar{height:8px;background:#00ff88;width:0%;border-radius:10px;transition:width .3s}
 #barWrap{background:#222;border-radius:10px;overflow:hidden;margin:8px 0}
+.bottomNav{position:fixed;bottom:0;left:0;right:0;background:#111;border-top:1px solid #333;display:flex;justify-content:space-around;padding:8px 0 12px;z-index:99}
+.navBtn{background:none;color:#aaa;border:0;padding:6px;font-size:12px;text-align:center;flex:1}
+.navBtn.active{color:#00ff88}
+.navBtn b{font-size:20px;display:block}
+.pill{display:inline-block;padding:7px 12px;background:#222;border-radius:20px;margin:4px 4px 4px 0;font-size:13px;cursor:pointer;border:1px solid #333}
+.pill.active{background:#00ff88;color:#000;font-weight:700}
+.musicItem{display:flex;align-items:center;gap:8px;background:#222;padding:8px;border-radius:10px;margin:6px 0;cursor:pointer}
+.musicItem img{width:40px;height:40px;border-radius:8px}
+.small{font-size:12px;color:#aaa}
+.catBadge{display:inline-block;background:#00ff88;color:#000;font-size:11px;font-weight:700;padding:3px 8px;border-radius:10px;margin-left:6px}
 </style>
 </head>
 <body>
 <h1>⚡ PULSE</h1>
-<div id="profileArea"></div>
-<div class="card">
-<textarea id="caption" placeholder="What's happening?"></textarea>
-<input type="file" id="fileInput" accept="image/*,video/*">
-<button id="publishBtn" onclick="publishPost()" style="width:100%">Publish Globally 🚀</button>
-<div id="barWrap"><div id="bar"></div></div>
-<p id="publishText" style="text-align:center;font-size:13px;color:#aaa"></p>
+
+<!-- HOME / FYP / DISCOVER / PROFILE VIEWS -->
+<div id="view-home">
+  <p style="text-align:center;color:#aaa;font-size:13px">🏠 <b>Home</b> = Only people you follow</p>
+  <div id="homeFeed"></div>
 </div>
+
+<div id="view-fyp" style="display:none">
+  <p style="text-align:center;color:#aaa;font-size:13px">🔥 <b>FYP - For You Page</b> = Best posts from everyone, most liked first</p>
+  <div id="catPillsFYP"></div>
+  <div id="fypFeed"></div>
+</div>
+
+<div id="view-discover" style="display:none">
+  <p style="text-align:center;color:#aaa;font-size:13px">🔍 <b>Discover</b> = Search people, trending & categories</p>
+  <div class="card">
+    <input id="searchInput" placeholder="Search @username or caption..." oninput="doSearch()">
+    <div id="searchResults"></div>
+  </div>
+  <div class="card"><h3 style="margin:0 0 6px">🔥 Trending Today</h3><div id="trendingBox"><p class="small">Loading...</p></div></div>
+  <div class="card"><h3 style="margin:0 0 6px">Browse Categories</h3><div id="catPillsDiscover"></div><div id="discoverFeed"></div></div>
+</div>
+
+<div id="view-post" style="display:none">
+  <div class="card">
+    <h3 style="margin-top:0">Create Post ➕</h3>
+    <textarea id="caption" placeholder="What's happening?"></textarea>
+    <label class="small">📂 Category - Pick one so people can find it:</label>
+    <select id="category">
+      <option value="Funny">😂 Funny</option>
+      <option value="Music">🎵 Music</option>
+      <option value="Sports">⚽ Sports</option>
+      <option value="Gaming">🎮 Gaming</option>
+      <option value="Dance">💃 Dance</option>
+      <option value="Food">🍔 Food</option>
+      <option value="News">📰 News</option>
+      <option value="Beauty">💄 Beauty</option>
+      <option value="Cars">🚗 Cars</option>
+      <option value="School">🎓 School</option>
+      <option value="Other">✨ Other</option>
+    </select>
+    <label class="small">📸 Photo / Video (Video max 30 sec, 5MB):</label>
+    <input type="file" id="fileInput" accept="image/*,video/*">
+    <div id="previewArea"></div>
+    <label class="small">🎵 Add Music to your Photo (optional) - Search a song:</label>
+    <input id="musicSearch" placeholder="Search song - e.g. Drake, Amapiano, Tyla...">
+    <button onclick="searchMusic()" style="width:100%;background:#222;color:#fff">🔍 Search Music</button>
+    <div id="musicResults"></div>
+    <p id="selectedMusicText" class="small" style="color:#00ff88"></p>
+    <button id="publishBtn" onclick="publishPost()" style="width:100%">Publish Globally 🚀</button>
+    <div id="barWrap"><div id="bar"></div></div>
+    <p id="publishText" style="text-align:center;font-size:13px;color:#aaa"></p>
+  </div>
+</div>
+
+<div id="view-profile" style="display:none">
+  <div id="profileArea"></div>
+  <div id="myPostsFeed"></div>
+</div>
+
 <button onclick="loadFeed()" style="width:100%;background:#222;color:#fff">🔄 Refresh Feed</button>
-<div id="feed"></div>
+
+<div class="bottomNav">
+  <button class="navBtn active" id="nav-home" onclick="switchTab('home')"><b>🏠</b>Home</button>
+  <button class="navBtn" id="nav-fyp" onclick="switchTab('fyp')"><b>🔥</b>FYP</button>
+  <button class="navBtn" id="nav-post" onclick="switchTab('post')"><b>➕</b>Post</button>
+  <button class="navBtn" id="nav-discover" onclick="switchTab('discover')"><b>🔍</b>Discover</button>
+  <button class="navBtn" id="nav-profile" onclick="switchTab('profile')"><b>👤</b>Profile</button>
+</div>
+
 <script>
 const DB='https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses.json';
 let currentUser=JSON.parse(localStorage.getItem('pulse_user')||'null');
 let allProfiles={};
-let myTotalLikes=0;
+let allFeedData={};
+let allFeedIds=[];
+let currentCatFYP='All';
+let currentCatDiscover='All';
+let selectedMusic=null;
+const CATS=['All','Funny','Music','Sports','Gaming','Dance','Food','News','Beauty','Cars','School','Other'];
+const CAT_EMOJI={Funny:'😂',Music:'🎵',Sports:'⚽',Gaming:'🎮',Dance:'💃',Food:'🍔',News:'📰',Beauty:'💄',Cars:'🚗',School:'🎓',Other:'✨'};
+
+function switchTab(tab){
+  ['home','fyp','post','discover','profile'].forEach(t=>{
+    document.getElementById('view-'+t).style.display = (t===tab?'block':'none');
+    document.getElementById('nav-'+t).classList.toggle('active', t===tab);
+  });
+  if(tab==='profile') renderProfile();
+  window.scrollTo(0,0);
+}
 function compressImage(file,cb,maxW,quality){
   let r=new FileReader();
   r.onload=e=>{
@@ -41,10 +126,8 @@ function compressImage(file,cb,maxW,quality){
     img.onload=()=>{
       try{
         let scale=Math.min(1,maxW/img.width);
-        let w=Math.round(img.width*scale);
-        let h=Math.round(img.height*scale);
-        let c=document.createElement('canvas');
-        c.width=w; c.height=h;
+        let w=Math.round(img.width*scale), h=Math.round(img.height*scale);
+        let c=document.createElement('canvas'); c.width=w; c.height=h;
         c.getContext('2d').drawImage(img,0,0,w,h);
         cb(c.toDataURL('image/jpeg',quality));
       }catch(err){ cb(e.target.result); }
@@ -68,32 +151,31 @@ function renderProfile(){
     a.innerHTML=`<div class="card"><h3>Create Your Profile</h3>
     <input id="newUsername" placeholder="Choose username (no spaces)">
     <input id="newBio" placeholder="Your bio...">
-    <p style="font-size:13px;color:#aaa">Profile photo:</p>
+    <p class="small">Profile photo:</p>
     <input type="file" id="newPfp" accept="image/*">
     <button onclick="saveProfile()" style="width:100%">Create Profile ✅</button></div>`;
     return;
   }
-  let followers=(currentUser.followers||[]).length;
-  let following=(currentUser.following||[]).length;
+  let followers=(currentUser.followers||[]).length, following=(currentUser.following||[]).length;
   a.innerHTML=`<div class="card" style="text-align:center">
   <img class="bigpfp" src="${currentUser.pfp||'https://via.placeholder.com/90'}">
   <h2 style="margin:8px 0 2px">@${currentUser.username}</h2>
   <p style="color:#aaa;margin:0">${currentUser.bio||''}</p>
   <p><b id="myPostsCount">0</b> Posts • <b>${followers}</b> Followers • <b>${following}</b> Following • <b id="myLikesCount">0</b> Likes</p>
   <button onclick="editProfile()" style="background:#222;color:#fff">Edit Profile ✏️</button>
-  <button onclick="logout()" style="background:#ff0055;color:#fff">Log Out</button>
-  </div>`;
+  <button onclick="logout()" style="background:#ff0055;color:#fff">Log Out</button></div>`;
+  renderMyPosts();
 }
 function editProfile(){
   let a=document.getElementById('profileArea');
   a.innerHTML=`<div class="card"><h3>Edit Profile</h3>
   <input id="newBio" placeholder="Your bio..." value="${currentUser.bio||''}">
-  <p style="font-size:13px;color:#aaa">Change photo (optional):</p>
+  <p class="small">Change photo (optional):</p>
   <input type="file" id="newPfp" accept="image/*">
   <button onclick="saveProfile(true)" style="width:100%">Save Changes ✅</button>
   <button onclick="renderProfile()" style="width:100%;background:#222;color:#fff;margin-top:6px">Cancel</button></div>`;
 }
-function logout(){localStorage.removeItem('pulse_user');currentUser=null;renderProfile();loadFeed();}
+function logout(){localStorage.removeItem('pulse_user');currentUser=null;renderProfile();loadFeed();switchTab('home');}
 function saveProfile(isEdit){
   let bio=document.getElementById('newBio').value;
   let file=document.getElementById('newPfp').files[0];
@@ -106,152 +188,175 @@ function saveProfile(isEdit){
   }
   if(file){compressImage(file,(s)=>doSave(s),600,0.5);} else {doSave('');}
 }
-let allFeedIds=[];
-let allFeedData={};
-let feedShown=0;
-function loadFeed(){
-  let feed=document.getElementById('feed');
-  feed.innerHTML='<p style="text-align:center;color:#aaa">Loading feed... ⚡</p>';
-  feedShown=0;
-  fetch(DB).then(r=>r.json()).then(data=>{
-    feed.innerHTML='';
-    if(!data){feed.innerHTML='<p style="text-align:center">No posts yet - be first!</p>';return;}
-    allFeedData=data;
-    allFeedIds=Object.keys(data).reverse();
-    renderNextBatch();
-  });
+// MUSIC SEARCH - Free iTunes Preview
+async function searchMusic(){
+  let q=document.getElementById('musicSearch').value.trim();
+  if(!q) return alert('Type a song name first');
+  document.getElementById('musicResults').innerHTML='<p class="small">Searching music...</p>';
+  try{
+    let res=await fetch('https://itunes.apple.com/search?term='+encodeURIComponent(q)+'&media=music&limit=6');
+    let data=await res.json();
+    if(!data.results || !data.results.length){ document.getElementById('musicResults').innerHTML='<p class="small">No songs found. Try another name.</p>'; return; }
+    document.getElementById('musicResults').innerHTML = data.results.map((s,i)=>`
+      <div class="musicItem" onclick="pickMusic(${i})">
+        <img src="${s.artworkUrl100}"><div style="flex:1"><b>${s.trackName}</b><br><span class="small">${s.artistName}</span></div>
+        <button style="padding:6px 10px">➕ Add</button>
+      </div>`).join('');
+    window._musicResults=data.results;
+  }catch(e){ document.getElementById('musicResults').innerHTML='<p class="small">Music search failed, check internet.</p>'; }
 }
-function renderNextBatch(){
-  let feed=document.getElementById('feed');
-  let oldBtn=document.getElementById('loadMoreBtn');
-  if(oldBtn) oldBtn.remove();
-  let myPosts=0; myTotalLikes=0;
-  Object.keys(allFeedData).forEach(id=>{
-    let p=allFeedData[id];
-    if(currentUser && p.author===currentUser.username){ myPosts++; myTotalLikes+=(p.likes||0); }
-  });
-  let likesEl=document.getElementById('myLikesCount'); if(likesEl) likesEl.innerText=myTotalLikes;
-  let postsEl=document.getElementById('myPostsCount'); if(postsEl) postsEl.innerText=myPosts;
-  let batch = allFeedIds.slice(feedShown, feedShown+10);
-  batch.forEach(id=>{
-    let p=allFeedData[id];
-    let author=p.author||'pulse_user';
-    let authorPic=p.authorPic||'https://via.placeholder.com/40';
-    let isMe = currentUser && author===currentUser.username;
-    let meFollowing = currentUser && allProfiles[currentUser.username] ? (allProfiles[currentUser.username].following||[]) : [];
-    let isFollowing = meFollowing.includes(author);
-    let followBtn = !currentUser ? '' : isMe ? '<span style="font-size:12px;color:#888">• You</span>' : `<button onclick="followUser('${author}',this)" style="padding:6px 10px;background:${isFollowing?'#222':'#00ff88'};color:${isFollowing?'#000':'#000'};font-size:12px">${isFollowing?'✓ Following':'＋ Follow'}</button>`;
-    let deleteBtn = isMe ? `<button onclick="deletePost('${id}')" style="padding:6px 10px;background:#ff0055;color:#fff;font-size:12px;margin-left:auto">🗑️ Delete</button>` : '';
-    let mediaHtml='';
-    if(p.media){
-      if(p.type&&p.type.includes('video')) mediaHtml=`<video src="${p.media}" controls playsinline preload="none" style="width:100%;border-radius:12px;margin-top:8px"></video>`;
-      else mediaHtml=`<img src="${p.media}" loading="lazy" style="width:100%;border-radius:12px;margin-top:8px">`;
-    }
-    feed.innerHTML+=`<div class="card" id="post-${id}"><div style="display:flex;align-items:center;gap:8px"><img class="pfp" src="${authorPic}" loading="lazy"><b>@${author}</b> ${followBtn} ${deleteBtn}</div><p>${p.caption||''}</p>${mediaHtml}<br><br><button onclick="likePost('${id}',${p.likes||0},this)">❤️ ${p.likes||0} Like</button> <button onclick="commentPost('${id}')">💬 Comment</button><div>${(p.comments||[]).map(c=>`<p>💬 ${c}</p>`).join('')}</div></div>`;
-  });
-  feedShown+=batch.length;
-  if(feedShown < allFeedIds.length){
-    feed.innerHTML+=`<button id="loadMoreBtn" onclick="renderNextBatch()" style="width:100%;background:#222;color:#fff;margin-top:10px">Load More ⬇️</button>`;
-  }
+function pickMusic(i){
+  let s=window._musicResults[i];
+  selectedMusic={name:s.trackName, artist:s.artistName, preview:s.previewUrl, artwork:s.artworkUrl100};
+  document.getElementById('selectedMusicText').innerText='🎵 Added: '+s.trackName+' - '+s.artistName+' (will play on your post)';
+  document.getElementById('musicResults').innerHTML='<p class="small" style="color:#00ff88">✅ Music added! You can search again to change it.</p>';
 }
-window.addEventListener('scroll', ()=>{
-  if((window.innerHeight + window.scrollY) >= document.body.scrollHeight - 500){
-    let btn=document.getElementById('loadMoreBtn');
-    if(btn) renderNextBatch();
-  }
+document.getElementById('fileInput').addEventListener('change', function(){
+  let f=this.files[0]; if(!f) return;
+  let url=URL.createObjectURL(f);
+  if(f.type.includes('image')) document.getElementById('previewArea').innerHTML=`<img src="${url}">`;
+  else document.getElementById('previewArea').innerHTML=`<video src="${url}" controls></video>`;
 });
+function postCard(id,p){
+  let author=p.author||'pulse_user';
+  let authorPic=p.authorPic||'https://via.placeholder.com/40';
+  let isMe=currentUser && author===currentUser.username;
+  let meFollowing=currentUser && allProfiles[currentUser.username] ? (allProfiles[currentUser.username].following||[]) : [];
+  let isFollowing=meFollowing.includes(author);
+  let followBtn=!currentUser?'':isMe?'<span class="small">• You</span>':`<button onclick="followUser('${author}',this)" style="padding:6px 10px;background:${isFollowing?'#222':'#00ff88'};color:${isFollowing?'#fff':'#000'};font-size:12px">${isFollowing?'✓ Following':'＋ Follow'}</button>`;
+  let deleteBtn=isMe?`<button onclick="deletePost('${id}')" style="padding:6px 10px;background:#ff0055;color:#fff;font-size:12px;margin-left:auto">🗑️ Delete</button>`:'';
+  let mediaHtml='';
+  if(p.media){
+    if(p.type&&p.type.includes('video')) mediaHtml=`<video src="${p.media}" controls playsinline preload="none" style="width:100%;margin-top:8px"></video>`;
+    else mediaHtml=`<img src="${p.media}" loading="lazy" style="width:100%;margin-top:8px">`;
+  }
+  let musicHtml='';
+  if(p.music && p.music.preview){
+    musicHtml=`<div style="background:#222;padding:8px;border-radius:10px;margin-top:8px;display:flex;gap:8px;align-items:center"><img src="${p.music.artwork||''}" style="width:36px;height:36px"><div style="flex:1"><b style="font-size:13px">🎵 ${p.music.name||'Song'}</b><br><span class="small">${p.music.artist||''}</span></div><audio controls src="${p.music.preview}" style="width:130px"></audio></div>`;
+  }
+  let cat = p.category||'Other';
+  return `<div class="card" id="post-${id}"><div style="display:flex;align-items:center;gap:8px"><img class="pfp" src="${authorPic}" loading="lazy"><b>@${author}</b><span class="catBadge">${CAT_EMOJI[cat]||'✨'} ${cat}</span> ${followBtn} ${deleteBtn}</div><p>${p.caption||''}</p>${mediaHtml}${musicHtml}<br><button onclick="likePost('${id}',${p.likes||0},this)">❤️ ${p.likes||0} Like</button> <button onclick="commentPost('${id}')">💬 Comment</button><div>${(p.comments||[]).map(c=>`<p>💬 ${c}</p>`).join('')}</div></div>`;
+}
+function renderCatPills(){
+  let fypHtml=CATS.map(c=>`<span class="pill ${c===currentCatFYP?'active':''}" onclick="setCatFYP('${c}')">${c==='All'?'🌍 All':(CAT_EMOJI[c]||'')+' '+c}</span>`).join('');
+  document.getElementById('catPillsFYP').innerHTML=fypHtml;
+  let discHtml=CATS.map(c=>`<span class="pill ${c===currentCatDiscover?'active':''}" onclick="setCatDiscover('${c}')">${c==='All'?'🌍 All':(CAT_EMOJI[c]||'')+' '+c}</span>`).join('');
+  document.getElementById('catPillsDiscover').innerHTML=discHtml;
+}
+function setCatFYP(c){ currentCatFYP=c; renderCatPills(); renderFeeds(); }
+function setCatDiscover(c){ currentCatDiscover=c; renderCatPills(); renderFeeds(); }
+function loadFeed(){
+  fetch(DB).then(r=>r.json()).then(data=>{
+    allFeedData=data||{};
+    allFeedIds=Object.keys(allFeedData).reverse();
+    renderFeeds();
+  });
+}
+function renderFeeds(){
+  renderCatPills();
+  let posts=allFeedIds.map(id=>({id, ...allFeedData[id]}));
+  // HOME - only following
+  let following=currentUser ? (allProfiles[currentUser.username]?.following||[]) : [];
+  let homePosts=posts.filter(p=> currentUser && (following.includes(p.author) || p.author===currentUser.username));
+  document.getElementById('homeFeed').innerHTML = !currentUser ? '<div class="card"><p>Create a profile to see Home. Go to Profile 👤</p></div>' : homePosts.length? homePosts.map(p=>postCard(p.id,p)).join('') : '<div class="card"><p>🏠 Home is empty.<br>You are not following anyone yet.<br>Go to <b>FYP 🔥</b> to find people to follow!</p><button onclick="switchTab(\'fyp\')" style="width:100%">Go to FYP 🔥</button></div>';
+  // FYP - most liked first + category filter
+  let fypPosts=[...posts].sort((a,b)=>(b.likes||0)-(a.likes||0));
+  if(currentCatFYP!=='All') fypPosts=fypPosts.filter(p=>(p.category||'Other')===currentCatFYP);
+  document.getElementById('fypFeed').innerHTML = fypPosts.length? fypPosts.map(p=>postCard(p.id,p)).join('') : '<p style="text-align:center;color:#aaa">No posts in this category yet - be first!</p>';
+  // DISCOVER
+  let discPosts=posts;
+  if(currentCatDiscover!=='All') discPosts=discPosts.filter(p=>(p.category||'Other')===currentCatDiscover);
+  document.getElementById('discoverFeed').innerHTML = discPosts.slice(0,10).map(p=>postCard(p.id,p)).join('') || '<p class="small">No posts here yet.</p>';
+  // TRENDING - top 3 liked
+  let trending=[...posts].sort((a,b)=>(b.likes||0)-(a.likes||0)).slice(0,3);
+  document.getElementById('trendingBox').innerHTML = trending.length? trending.map((p,i)=>`<p><b>${i+1}.</b> @${p.author} - ${p.caption||''} <span style="color:#ff0055">❤️ ${p.likes||0}</span></p>`).join('') : '<p class="small">No trending yet.</p>';
+  // PROFILE COUNTS + MY POSTS
+  let myPosts=0, myLikes=0;
+  Object.keys(allFeedData).forEach(id=>{ let p=allFeedData[id]; if(currentUser && p.author===currentUser.username){ myPosts++; myLikes+=(p.likes||0); } });
+  let le=document.getElementById('myLikesCount'); if(le) le.innerText=myLikes;
+  let pe=document.getElementById('myPostsCount'); if(pe) pe.innerText=myPosts;
+  renderMyPosts();
+}
+function renderMyPosts(){
+  if(!currentUser) return;
+  let el=document.getElementById('myPostsFeed'); if(!el) return;
+  let mine=allFeedIds.filter(id=>allFeedData[id].author===currentUser.username);
+  el.innerHTML = mine.length? '<h3 style="text-align:center">Your Posts</h3>'+mine.map(id=>postCard(id,allFeedData[id])).join('') : '<p style="text-align:center;color:#aaa">You have no posts yet. Tap ➕ Post to create one!</p>';
+}
+function doSearch(){
+  let q=document.getElementById('searchInput').value.trim().toLowerCase();
+  let box=document.getElementById('searchResults');
+  if(!q){ box.innerHTML=''; return; }
+  let matched=allFeedIds.filter(id=>{
+    let p=allFeedData[id];
+    return (p.author||'').toLowerCase().includes(q) || (p.caption||'').toLowerCase().includes(q);
+  }).slice(0,5);
+  let users=Object.keys(allProfiles).filter(u=>u.toLowerCase().includes(q)).slice(0,5);
+  box.innerHTML = '<p class="small">Results:</p>' +
+    users.map(u=>`<p>👤 @${u} <button onclick="followUser('${u}',this)" style="padding:4px 8px;font-size:12px">＋ Follow</button></p>`).join('') +
+    matched.map(id=>postCard(id,allFeedData[id])).join('') || '<p class="small">No results.</p>';
+}
 function deletePost(id){
   if(!confirm('Delete this post? This cannot be undone.')) return;
-  let el=document.getElementById('post-'+id);
-  if(el) el.remove();
-  delete allFeedData[id];
-  allFeedIds=allFeedIds.filter(x=>x!==id);
-  if(feedShown>0) feedShown--;
-  fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'DELETE'});
+  let el=document.getElementById('post-'+id); if(el) el.remove();
+  delete allFeedData[id]; allFeedIds=allFeedIds.filter(x=>x!==id);
+  fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'DELETE'}).then(()=>renderFeeds());
 }
 function followUser(author,btn){
   if(!currentUser){alert('Create a profile first');return;}
   if(author===currentUser.username) return;
   loadProfiles(()=>{
-    let me = allProfiles[currentUser.username]||currentUser;
-    let them = allProfiles[author]||{username:author,followers:[],following:[]};
-    me.following = me.following||[]; them.followers = them.followers||[];
-    let isFollowing = me.following.includes(author);
-    if(isFollowing){
-      me.following = me.following.filter(u=>u!==author);
-      them.followers = them.followers.filter(u=>u!==currentUser.username);
-      btn.innerText='＋ Follow'; btn.style.background='#00ff88'; btn.style.color='#000';
-    } else {
-      me.following.push(author); them.followers.push(currentUser.username);
-      btn.innerText='✓ Following'; btn.style.background='#222'; btn.style.color='#fff';
-    }
+    let me=allProfiles[currentUser.username]||currentUser;
+    let them=allProfiles[author]||{username:author,followers:[],following:[]};
+    me.following=me.following||[]; them.followers=them.followers||[];
+    let isFollowing=me.following.includes(author);
+    if(isFollowing){ me.following=me.following.filter(u=>u!==author); them.followers=them.followers.filter(u=>u!==currentUser.username); }
+    else { me.following.push(author); them.followers.push(currentUser.username); }
     localStorage.setItem('pulse_user',JSON.stringify(me));
     allProfiles[currentUser.username]=me; allProfiles[author]=them;
     fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/profiles/${currentUser.username}.json`,{method:'PUT',body:JSON.stringify(me)});
-    fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/profiles/${author}.json`,{method:'PUT',body:JSON.stringify(them)}).then(()=>renderProfile());
+    fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/profiles/${author}.json`,{method:'PUT',body:JSON.stringify(them)}).then(()=>{renderProfile();renderFeeds();});
   });
 }
-function likePost(id,likes,btn){btn.innerText='❤️ '+(likes+1)+' Like';fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PATCH',body:JSON.stringify({likes:likes+1})});}
+function likePost(id,likes,btn){btn.innerText='❤️ '+(likes+1)+' Like';fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PATCH',body:JSON.stringify({likes:likes+1})}).then(()=>loadFeed());}
 function commentPost(id){
-  let comment=prompt('Write a comment:');
-  if(!comment) return;
-  let p=allFeedData[id];
-  if(!p.comments) p.comments=[];
+  let comment=prompt('Write a comment:'); if(!comment) return;
+  let p=allFeedData[id]; if(!p.comments) p.comments=[];
   p.comments.push((currentUser?currentUser.username:'guest')+': '+comment);
   fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PATCH',body:JSON.stringify({comments:p.comments})}).then(()=>loadFeed());
 }
 function publishPost(){
   let caption=document.getElementById('caption').value.trim();
+  let category=document.getElementById('category').value;
   let file=document.getElementById('fileInput').files[0];
-  if(!currentUser) return alert('Create profile first');
+  if(!currentUser) return alert('Create profile first - go to Profile 👤');
   if(!caption && !file) return alert('Write something or pick a photo/video');
-  let btn=document.getElementById('publishBtn');
-  btn.disabled=true;
+  let btn=document.getElementById('publishBtn'); btn.disabled=true;
   document.getElementById('publishText').innerText='Preparing...';
   document.getElementById('bar').style.width='10%';
-  function reset(msg){
-    document.getElementById('publishText').innerText=msg||'';
-    document.getElementById('bar').style.width='0%';
-    btn.disabled=false;
-  }
+  function reset(msg){ document.getElementById('publishText').innerText=msg||''; document.getElementById('bar').style.width='0%'; btn.disabled=false; }
   let done=(media,type)=>{
     document.getElementById('publishText').innerText='Publishing...';
     document.getElementById('bar').style.width='30%';
     let id='post_'+Date.now();
-    let newPost={author:currentUser.username,authorPic:currentUser.pfp||'https://via.placeholder.com/40',caption:caption,media:media||'',type:type||'',likes:0,comments:[],time:Date.now()};
+    let newPost={author:currentUser.username,authorPic:currentUser.pfp||'https://via.placeholder.com/40',caption:caption,category:category,media:media||'',type:type||'',music:selectedMusic||null,likes:0,comments:[],time:Date.now()};
     fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PUT',body:JSON.stringify(newPost)}).then(()=>{
-      document.getElementById('caption').value='';
-      document.getElementById('fileInput').value='';
-      document.getElementById('bar').style.width='100%';
-      document.getElementById('publishText').innerText='Published ✅';
-      btn.disabled=false;
+      document.getElementById('caption').value=''; document.getElementById('fileInput').value=''; document.getElementById('previewArea').innerHTML=''; document.getElementById('musicResults').innerHTML=''; document.getElementById('selectedMusicText').innerText=''; selectedMusic=null;
+      document.getElementById('bar').style.width='100%'; document.getElementById('publishText').innerText='Published ✅'; btn.disabled=false;
       setTimeout(()=>{document.getElementById('bar').style.width='0%';},1000);
-      loadFeed();
+      loadFeed(); switchTab('home');
     }).catch(e=>{ alert('Publish failed: '+e.message); reset('Failed'); });
   };
   if(!file){ done('',''); return; }
   if(file.type.includes('video')){
-    if(file.size > 5*1024*1024){ alert('Video too big! Must be 30 seconds or less and under 5MB. Try a shorter / lower quality video.'); reset(''); return; }
-    let v=document.createElement('video');
-    v.preload='metadata';
-    v.onloadedmetadata=()=>{
-      URL.revokeObjectURL(v.src);
-      if(v.duration > 30){ alert('Video too long! Max 30 seconds. Yours is '+Math.round(v.duration)+' seconds.'); reset(''); return; }
-      let r=new FileReader();
-      r.onload=()=>done(r.result,file.type);
-      r.onerror=()=>{ alert('Could not read video'); reset(''); };
-      r.readAsDataURL(file);
-    };
+    if(file.size>5*1024*1024){ alert('Video too big! Must be 30 seconds or less and under 5MB.'); reset(''); return; }
+    let v=document.createElement('video'); v.preload='metadata';
+    v.onloadedmetadata=()=>{ URL.revokeObjectURL(v.src); if(v.duration>30){ alert('Video too long! Max 30 seconds. Yours is '+Math.round(v.duration)+' seconds.'); reset(''); return; } let r=new FileReader(); r.onload=()=>done(r.result,file.type); r.onerror=()=>{ alert('Could not read video'); reset(''); }; r.readAsDataURL(file); };
     v.onerror=()=>{ alert('Could not read video'); reset(''); };
-    v.src=URL.createObjectURL(file);
-    return;
+    v.src=URL.createObjectURL(file); return;
   }
-  if(file.type.includes('image')){
-    compressImage(file,(s)=>done(s,file.type),600,0.5);
-    return;
-  }
-  alert('Only photos and videos allowed');
-  reset('');
+  if(file.type.includes('image')){ compressImage(file,(s)=>done(s,file.type),600,0.5); return; }
+  alert('Only photos and videos allowed'); reset('');
 }
 loadProfiles(()=>{ renderProfile(); loadFeed(); });
 </script>
