@@ -4,355 +4,226 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pulse</title>
 <style>
-body{background:#000;color:#fff;font-family:Arial;padding:12px;padding-bottom:80px;margin:0}
-h1{color:#00ff88;text-align:center;margin:8px 0}
-.card{background:#111;border:1px solid #222;border-radius:16px;padding:14px;margin:12px 0}
-input,textarea,select{width:100%;padding:12px;margin:6px 0;background:#222;color:#fff;border:1px solid #333;border-radius:10px;box-sizing:border-box}
-button{background:#00ff88;color:#000;border:0;padding:12px;border-radius:10px;font-weight:700;cursor:pointer}
-button:disabled{opacity:.6}
-img,video{max-width:100%;border-radius:12px}
-.pfp{width:40px;height:40px;border-radius:50%;object-fit:cover}
-.bigpfp{width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid #00ff88}
-#bar{height:8px;background:#00ff88;width:0%;border-radius:10px;transition:width .3s}
-#barWrap{background:#222;border-radius:10px;overflow:hidden;margin:8px 0}
-.bottomNav{position:fixed;bottom:0;left:0;right:0;background:#111;border-top:1px solid #333;display:flex;justify-content:space-around;padding:8px 0 12px;z-index:99}
-.navBtn{background:none;color:#aaa;border:0;padding:6px;font-size:12px;text-align:center;flex:1}
-.navBtn.active{color:#00ff88}
-.navBtn b{font-size:20px;display:block}
-.pill{display:inline-block;padding:7px 12px;background:#222;border-radius:20px;margin:4px 4px 4px 0;font-size:13px;cursor:pointer;border:1px solid #333}
-.pill.active{background:#00ff88;color:#000;font-weight:700}
-.musicItem{display:flex;align-items:center;gap:8px;background:#222;padding:8px;border-radius:10px;margin:6px 0;cursor:pointer}
-.musicItem img{width:40px;height:40px;border-radius:8px}
-.small{font-size:12px;color:#aaa}
-.catBadge{display:inline-block;background:#00ff88;color:#000;font-size:11px;font-weight:700;padding:3px 8px;border-radius:10px;margin-left:6px}
+body{background:#000;color:#fff;font-family:Arial;margin:0;padding-bottom:90px}
+.top{position:sticky;top:0;background:#000;padding:14px;display:flex;justify-content:space-between;align-items:center;z-index:10;border-bottom:1px solid #222}
+.top b{font-size:26px}
+.cats{display:flex;gap:8px;overflow-x:auto;padding:10px}
+.cats button{background:#222;color:#fff;border:0;padding:8px 14px;border-radius:20px;white-space:nowrap}
+.cats button.active{background:#fff;color:#000;font-weight:bold}
+.feed{background:#111;margin:10px;border-radius:16px;padding:10px}
+.photos{display:flex;gap:6px;overflow-x:auto;scroll-snap-type:x mandatory}
+.photos img,.photos video{width:100%;min-width:100%;height:280px;object-fit:cover;border-radius:12px;scroll-snap-align:center}
+.priceRow{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+.price{background:#fff;color:#000;font-weight:bold;padding:6px 12px;border-radius:12px;font-size:18px}
+.buy{background:#25D366;color:#fff;border:0;padding:12px 16px;border-radius:20px;font-weight:bold;font-size:15px;width:100%;margin-top:10px}
+.actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.actions button{background:#222;color:#fff;border:0;padding:10px 12px;border-radius:20px;font-size:14px}
+.actions button.liked{background:#ff2d55}
+.bottom{position:fixed;bottom:0;left:0;right:0;background:#111;display:flex;justify-content:space-around;padding:12px;z-index:20}
+.bottom button{background:#fff;color:#000;border:0;padding:12px 20px;border-radius:20px;font-weight:bold}
+input,select,textarea{width:92%;padding:11px;border-radius:12px;border:0;margin:6px;background:#222;color:#fff}
+.comment{background:#1a1a1a;padding:8px;border-radius:10px;margin:6px;text-align:left}
+.badge{font-size:12px;background:#333;padding:4px 8px;border-radius:10px}
+.loc{color:#FFD500;font-size:14px;margin:4px 0}
+.details{background:#1a1a1a;padding:10px;border-radius:10px;font-size:14px;color:#ddd;text-align:left;white-space:pre-wrap}
+.safety{background:#2a1a00;border:1px solid #FFD500;padding:10px;border-radius:12px;margin:10px;font-size:13px;text-align:center}
+.verified{color:#25D366;font-weight:bold;font-size:13px}
+.newSeller{color:#FFAA00;font-size:13px;font-weight:bold}
+.warn{background:#3a0000;border:1px solid #ff2d55;padding:8px;border-radius:10px;font-size:13px;margin-top:8px}
+.stars{color:#FFD500;font-size:16px}
+.ratingBox{background:#1a1a1a;padding:12px;border-radius:12px;margin-top:10px;text-align:left}
+.starBtn{font-size:28px;background:none;border:0;color:#555;cursor:pointer;padding:2px}
+.starBtn.on{color:#FFD500}
+.modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);display:none;justify-content:center;align-items:center;z-index:100;padding:20px}
+.modalBox{background:#1a1a1a;padding:20px;border-radius:16px;width:100%;max-width:400px}
+.modalBox button{width:100%;padding:12px;border-radius:12px;border:0;margin-top:8px;font-weight:bold}
+.checkRow{text-align:left;font-size:14px;margin:8px 0}
 </style>
 </head>
 <body>
-<h1>⚡ PULSE</h1>
-<div id="view-home">
-  <p style="text-align:center;color:#aaa;font-size:13px">🏠 <b>Home</b> = Only people you follow</p>
-  <div id="homeFeed"></div>
+<div class="top"><b>Pulse</b><span>For You</span></div>
+<div class="safety">🛡️ <b>PULSE SAFE TRADE:</b> Never pay before you see it. Meet in a public place. Check before you pay. Never share OTP / PIN.</div>
+<div class="cats" id="cats"></div>
+<div id="app"></div>
+
+<div style="text-align:center;padding:10px">
+<h3>➕ Sell Something</h3>
+<input type="file" id="file" accept="image/*,video/*" multiple><br>
+<p style="font-size:13px;color:#aaa">Pick up to 4 photos - swipe to see them. Real photos only.</p>
+<input id="title" placeholder="What are you selling?">
+<input id="price" placeholder="Price e.g. 50">
+<input id="whatsapp" placeholder="WhatsApp number e.g. 27712345678">
+<input id="location" placeholder="📍 Location e.g. Your Town, City, Area - NEVER your home address">
+<select id="category">
+<option value="Food">🍔 Food</option>
+<option value="Nails">💅 Nails / Beauty</option>
+<option value="Sneakers">👟 Sneakers / Clothes</option>
+<option value="Phones">📱 Phones / Tech</option>
+<option value="Other">📦 Other</option>
+</select>
+<textarea id="details" rows="3" placeholder="📝 Details: Sizes, Colours, Delivery, Condition, Available when"></textarea>
+<textarea id="desc" placeholder="Short description"></textarea><br>
+<label style="font-size:13px;color:#ccc"><input type="checkbox" id="agree" style="width:auto"> I agree: I am selling a real product, I will meet in public, I will not ask for payment before meet-up</label><br><br>
+<button onclick="upload()" style="background:#fff;color:#000;padding:14px 30px;border:0;border-radius:20px;font-weight:bold;font-size:16px">Publish Listing</button>
+<p id="profile" style="color:#aaa"></p>
 </div>
-<div id="view-fyp" style="display:none">
-  <p style="text-align:center;color:#aaa;font-size:13px">🔥 <b>FYP - For You Page</b> = Best posts from everyone, most liked first</p>
-  <div id="catPillsFYP"></div>
-  <div id="fypFeed"></div>
+
+<div class="bottom">
+<button onclick="filterCat('All')">Home</button>
+<button onclick="document.getElementById('file').click()">+ Sell</button>
+<button onclick="showSafety()">🛡️ Safety</button>
 </div>
-<div id="view-discover" style="display:none">
-  <p style="text-align:center;color:#aaa;font-size:13px">🔍 <b>Discover</b> = Search people, trending & categories</p>
-  <div class="card">
-    <input id="searchInput" placeholder="Search @username or caption..." oninput="doSearch()">
-    <div id="searchResults"></div>
-  </div>
-  <div class="card"><h3 style="margin:0 0 6px">🔥 Trending Today</h3><div id="trendingBox"><p class="small">Loading...</p></div></div>
-  <div class="card"><h3 style="margin:0 0 6px">Browse Categories</h3><div id="catPillsDiscover"></div><div id="discoverFeed"></div></div>
+
+<div class="modal" id="buyModal">
+<div class="modalBox">
+<h3>🛡️ Safe Trade Check</h3>
+<p style="font-size:14px;color:#ccc">Before you contact this seller:</p>
+<div class="checkRow"><input type="checkbox" id="c1"> I will NOT pay before I see the product</div>
+<div class="checkRow"><input type="checkbox" id="c2"> I will meet in a PUBLIC place (mall, police station, garage)</div>
+<div class="checkRow"><input type="checkbox" id="c3"> I will check the product before I pay</div>
+<div class="checkRow"><input type="checkbox" id="c4"> I will NEVER share OTP / PIN / bank code</div>
+<button onclick="confirmBuy()" style="background:#25D366;color:#fff">Continue to WhatsApp →</button>
+<button onclick="closeModal()" style="background:#333;color:#fff">Cancel</button>
 </div>
-<div id="view-post" style="display:none">
-  <div class="card">
-    <h3 style="margin-top:0">Create Post ➕</h3>
-    <textarea id="caption" placeholder="What's happening?"></textarea>
-    <label class="small">📂 Category - Pick one so people can find it:</label>
-    <select id="category">
-      <option value="Funny">😂 Funny</option>
-      <option value="Music">🎵 Music</option>
-      <option value="Sports">⚽ Sports</option>
-      <option value="Gaming">🎮 Gaming</option>
-      <option value="Dance">💃 Dance</option>
-      <option value="Food">🍔 Food</option>
-      <option value="News">📰 News</option>
-      <option value="Beauty">💄 Beauty</option>
-      <option value="Cars">🚗 Cars</option>
-      <option value="School">🎓 School</option>
-      <option value="Other">✨ Other</option>
-    </select>
-    <label class="small">📸 Photo / Video (Video max 30 sec, 5MB):</label>
-    <input type="file" id="fileInput" accept="image/*,video/*">
-    <div id="previewArea"></div>
-    <label class="small">🎵 Add Music to your Photo (optional) - Search a song:</label>
-    <input id="musicSearch" placeholder="Search song - e.g. Drake, Amapiano, Tyla...">
-    <button onclick="searchMusic()" style="width:100%;background:#222;color:#fff">🔍 Search Music</button>
-    <div id="musicResults"></div>
-    <p id="selectedMusicText" class="small" style="color:#00ff88"></p>
-    <button id="publishBtn" onclick="publishPost()" style="width:100%">Publish Globally 🚀</button>
-    <div id="barWrap"><div id="bar"></div></div>
-    <p id="publishText" style="text-align:center;font-size:13px;color:#aaa"></p>
-  </div>
 </div>
-<div id="view-profile" style="display:none">
-  <div id="profileArea"></div>
-  <div id="myPostsFeed"></div>
+
+<div class="modal" id="rateModal">
+<div class="modalBox">
+<h3>⭐ Rate This Seller</h3>
+<p id="rateTitle" style="color:#ccc;font-size:14px"></p>
+<div style="text-align:center">
+<button class="starBtn" onclick="setStars(1)" id="s1">★</button>
+<button class="starBtn" onclick="setStars(2)" id="s2">★</button>
+<button class="starBtn" onclick="setStars(3)" id="s3">★</button>
+<button class="starBtn" onclick="setStars(4)" id="s4">★</button>
+<button class="starBtn" onclick="setStars(5)" id="s5">★</button>
 </div>
-<button onclick="loadFeed()" style="width:100%;background:#222;color:#fff">🔄 Refresh Feed</button>
-<div class="bottomNav">
-  <button class="navBtn active" id="nav-home" onclick="switchTab('home')"><b>🏠</b>Home</button>
-  <button class="navBtn" id="nav-fyp" onclick="switchTab('fyp')"><b>🔥</b>FYP</button>
-  <button class="navBtn" id="nav-post" onclick="switchTab('post')"><b>➕</b>Post</button>
-  <button class="navBtn" id="nav-discover" onclick="switchTab('discover')"><b>🔍</b>Discover</button>
-  <button class="navBtn" id="nav-profile" onclick="switchTab('profile')"><b>👤</b>Profile</button>
+<p id="starLabel" style="text-align:center;color:#FFD500">Tap a star</p>
+<textarea id="rateComment" placeholder="How was it? e.g. Fast, honest, product as described..."></textarea>
+<button onclick="submitRating()" style="background:#FFD500;color:#000">Submit Rating</button>
+<button onclick="closeRate()" style="background:#333;color:#fff">Cancel</button>
 </div>
+</div>
+
 <script>
-const DB='https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses.json';
-let currentUser=JSON.parse(localStorage.getItem('pulse_user')||'null');
-let allProfiles={};
-let allFeedData={};
-let allFeedIds=[];
-let currentCatFYP='All';
-let currentCatDiscover='All';
-let selectedMusic=null;
-const CATS=['All','Funny','Music','Sports','Gaming','Dance','Food','News','Beauty','Cars','School','Other'];
-const CAT_EMOJI={Funny:'😂',Music:'🎵',Sports:'⚽',Gaming:'🎮',Dance:'💃',Food:'🍔',News:'📰',Beauty:'💄',Cars:'🚗',School:'🎓',Other:'✨'};
-function switchTab(tab){
-  ['home','fyp','post','discover','profile'].forEach(t=>{
-    document.getElementById('view-'+t).style.display = (t===tab?'block':'none');
-    document.getElementById('nav-'+t).classList.toggle('active', t===tab);
-  });
-  if(tab==='profile') renderProfile();
-  window.scrollTo(0,0);
+let cats=['All','Food','Nails','Sneakers','Phones','Other'];
+let activeCat='All';
+let posts=JSON.parse(localStorage.getItem('pulse')||'[]');
+let blocked=JSON.parse(localStorage.getItem('pulse_blocked')||'[]');
+let sellerRatings=JSON.parse(localStorage.getItem('pulse_ratings')||'{}');
+let pendingBuy=null; let pendingRateIdx=null; let tempStars=0;
+if(posts.length==0){
+posts=[
+{title:'Fresh Braai Plates',price:'50',whatsapp:'27712345678',category:'Food',location:'Your Town',details:'Plate includes: Pap, wors, chicken + salad\nDelivery available',desc:'Hot & ready 🔥',likes:1240,comments:['Still available?'],photos:[],liked:false,reports:0,sales:12},
+{title:'Nails Done',price:'150',whatsapp:'27712345678',category:'Nails',location:'Your Town',details:'Acrylic + Gel\nAny colour',desc:'Book today 💅',likes:890,comments:['So clean!'],photos:[],liked:false,reports:0,sales:8},
+{title:'iPhone 15 - R500',price:'500',whatsapp:'27799999999',category:'Phones',location:'Your Town',details:'Brand new sealed',desc:'Cheap cheap!',likes:10,comments:[],photos:[],liked:false,reports:0,sales:0}
+];
+sellerRatings['27712345678']=[{stars:5,comment:'Great food, on time!'},{stars:5,comment:'Honest seller'},{stars:4,comment:'Good, bit slow'}];
+sellerRatings['27799999999']=[{stars:1,comment:'Scam! Asked for payment first'}];
+localStorage.setItem('pulse_ratings',JSON.stringify(sellerRatings));
 }
-function compressImage(file,cb,maxW,quality){
-  let url = URL.createObjectURL(file);
-  let img = new Image();
-  img.onload = ()=>{
-    try{
-      let scale = Math.min(1, maxW/img.width);
-      let w = Math.round(img.width*scale);
-      let h = Math.round(img.height*scale);
-      let c = document.createElement('canvas');
-      c.width = w; c.height = h;
-      c.getContext('2d').drawImage(img,0,0,w,h);
-      URL.revokeObjectURL(url);
-      cb(c.toDataURL('image/jpeg', quality));
-    }catch(e){
-      URL.revokeObjectURL(url);
-      let r2 = new FileReader();
-      r2.onload = (ev)=>cb(ev.target.result);
-      r2.readAsDataURL(file);
-    }
-  };
-  img.onerror = ()=>{
-    URL.revokeObjectURL(url);
-    let r2 = new FileReader();
-    r2.onload = (ev)=>cb(ev.target.result);
-    r2.onerror = ()=>{ alert('This photo format is not supported. Try taking a screenshot of the photo and uploading that.'); document.getElementById('publishBtn').disabled=false; document.getElementById('publishText').innerText=''; document.getElementById('bar').style.width='0%'; };
-    r2.readAsDataURL(file);
-  };
-  img.src = url;
+function getSellerRating(wa){
+let r=sellerRatings[wa]||[];
+if(r.length==0) return {avg:0,count:0,stars:'☆☆☆☆☆'};
+let avg=r.reduce((a,b)=>a+b.stars,0)/r.length;
+let full=Math.round(avg);
+let stars='★'.repeat(full)+'☆'.repeat(5-full);
+return {avg:avg.toFixed(1),count:r.length,stars};
 }
-function loadProfiles(cb){
-  fetch('https://pulse-v2-707c2-default-rtdb.firebaseio.com/profiles.json').then(r=>r.json()).then(d=>{
-    allProfiles=d||{};
-    if(currentUser && allProfiles[currentUser.username]){ currentUser=allProfiles[currentUser.username]; localStorage.setItem('pulse_user',JSON.stringify(currentUser)); }
-    if(cb)cb();
-  }).catch(()=>{if(cb)cb();});
-}
-function renderProfile(){
-  let a=document.getElementById('profileArea');
-  if(!currentUser){
-    a.innerHTML=`<div class="card"><h3>Create Your Profile</h3>
-    <input id="newUsername" placeholder="Choose username (no spaces)">
-    <input id="newBio" placeholder="Your bio...">
-    <p class="small">Profile photo:</p>
-    <input type="file" id="newPfp" accept="image/*">
-    <button onclick="saveProfile()" style="width:100%">Create Profile ✅</button></div>`;
-    return;
-  }
-  let followers=(currentUser.followers||[]).length, following=(currentUser.following||[]).length;
-  a.innerHTML=`<div class="card" style="text-align:center">
-  <img class="bigpfp" src="${currentUser.pfp||'https://via.placeholder.com/90'}">
-  <h2 style="margin:8px 0 2px">@${currentUser.username}</h2>
-  <p style="color:#aaa;margin:0">${currentUser.bio||''}</p>
-  <p><b id="myPostsCount">0</b> Posts • <b>${followers}</b> Followers • <b>${following}</b> Following • <b id="myLikesCount">0</b> Likes</p>
-  <button onclick="editProfile()" style="background:#222;color:#fff">Edit Profile ✏️</button>
-  <button onclick="logout()" style="background:#ff0055;color:#fff">Log Out</button></div>`;
-  renderMyPosts();
-}
-function editProfile(){
-  let a=document.getElementById('profileArea');
-  a.innerHTML=`<div class="card"><h3>Edit Profile</h3>
-  <input id="newBio" placeholder="Your bio..." value="${currentUser.bio||''}">
-  <p class="small">Change photo (optional):</p>
-  <input type="file" id="newPfp" accept="image/*">
-  <button onclick="saveProfile(true)" style="width:100%">Save Changes ✅</button>
-  <button onclick="renderProfile()" style="width:100%;background:#222;color:#fff;margin-top:6px">Cancel</button></div>`;
-}
-function logout(){localStorage.removeItem('pulse_user');currentUser=null;renderProfile();loadFeed();switchTab('home');}
-function saveProfile(isEdit){
-  let bio=document.getElementById('newBio').value;
-  let file=document.getElementById('newPfp').files[0];
-  let username=isEdit?currentUser.username:document.getElementById('newUsername').value.trim().toLowerCase().replace(/\s+/g,'_');
-  if(!isEdit && !username){alert('Choose a username');return;}
-  function doSave(pfp){
-    let user={username,bio,pfp:pfp||(currentUser&&currentUser.pfp)||'',followers:(currentUser&&currentUser.followers)||[],following:(currentUser&&currentUser.following)||[]};
-    currentUser=user;localStorage.setItem('pulse_user',JSON.stringify(user));
-    fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/profiles/${username}.json`,{method:'PUT',body:JSON.stringify(user)}).then(()=>{renderProfile();loadFeed();});
-  }
-  if(file){compressImage(file,(s)=>doSave(s),600,0.5);} else {doSave('');}
-}
-async function searchMusic(){
-  let q=document.getElementById('musicSearch').value.trim();
-  if(!q) return alert('Type a song name first');
-  document.getElementById('musicResults').innerHTML='<p class="small">Searching music...</p>';
-  try{
-    let res=await fetch('https://itunes.apple.com/search?term='+encodeURIComponent(q)+'&media=music&limit=6');
-    let data=await res.json();
-    if(!data.results || !data.results.length){ document.getElementById('musicResults').innerHTML='<p class="small">No songs found. Try another name.</p>'; return; }
-    document.getElementById('musicResults').innerHTML = data.results.map((s,i)=>`
-      <div class="musicItem" onclick="pickMusic(${i})">
-        <img src="${s.artworkUrl100}"><div style="flex:1"><b>${s.trackName}</b><br><span class="small">${s.artistName}</span></div>
-        <button style="padding:6px 10px">➕ Add</button>
-      </div>`).join('');
-    window._musicResults=data.results;
-  }catch(e){ document.getElementById('musicResults').innerHTML='<p class="small">Music search failed, check internet.</p>'; }
-}
-function pickMusic(i){
-  let s=window._musicResults[i];
-  selectedMusic={name:s.trackName, artist:s.artistName, preview:s.previewUrl, artwork:s.artworkUrl100};
-  document.getElementById('selectedMusicText').innerText='🎵 Added: '+s.trackName+' - '+s.artistName+' (will play on your post)';
-  document.getElementById('musicResults').innerHTML='<p class="small" style="color:#00ff88">✅ Music added! You can search again to change it.</p>';
-}
-document.getElementById('fileInput').addEventListener('change', function(){
-  let f=this.files[0]; if(!f) return;
-  let url=URL.createObjectURL(f);
-  if(f.type.includes('image')) document.getElementById('previewArea').innerHTML=`<img src="${url}">`;
-  else document.getElementById('previewArea').innerHTML=`<video src="${url}" controls></video>`;
+function isVerified(p){ return p.location && p.details && p.details.length>10 && p.photos && p.photos.length>=1; }
+function isTooCheap(p){ let price=parseFloat(p.price); if(p.category=='Phones' && price<1000) return true; if(p.category=='Sneakers' && price<200) return true; return false; }
+function renderCats(){ document.getElementById('cats').innerHTML=cats.map(c=>`<button class="${c==activeCat?'active':''}" onclick="filterCat('${c}')">${c}</button>`).join(''); }
+function filterCat(c){activeCat=c; renderCats(); render();}
+function render(){
+let filtered=posts.filter(p=>activeCat=='All'||p.category==activeCat).filter(p=>!blocked.includes(p.whatsapp));
+let html='';
+filtered.forEach((p)=>{
+let idx=posts.indexOf(p);
+let photosHtml='';
+if(p.photos && p.photos.length>0){ photosHtml=`<div class="photos">${p.photos.map(u=> u.includes('video')? `<video src="${u}" controls></video>` : `<img src="${u}">`).join('')}</div><p style="font-size:12px;color:#aaa">⬅️ Swipe for ${p.photos.length} photos ➡️</p>`; } else { photosHtml=`<div class="photos"><img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800"></div>`; }
+let ver = isVerified(p) ? `<span class="verified">✅ Verified Seller</span>` : `<span class="newSeller">🆕 New Seller - Be Careful</span>`;
+let cheapWarn = isTooCheap(p) ? `<div class="warn">⚠️ WARNING: Price looks too low for this item. Could be a scam. Do NOT pay before you meet.</div>` : '';
+let rating=getSellerRating(p.whatsapp);
+let ratingHtml = rating.count>0 ? `<div><span class="stars">${rating.stars}</span> <b>${rating.avg}/5</b> (${rating.count} ratings) ${rating.avg<2.5? '<span style="color:#ff2d55;font-weight:bold">⚠️ LOW RATED - Be Extra Careful</span>':''}</div><div style="font-size:13px;color:#aaa">${sellerRatings[p.whatsapp].slice(0,2).map(r=>`⭐ ${r.stars} - "${r.comment}"`).join('<br>')}</div>` : `<div style="color:#aaa;font-size:13px">No ratings yet - be the first to rate after buying</div>`;
+html+=`<div class="feed">${photosHtml}
+<div style="text-align:left"><span class="badge">${p.category}</span> ${ver}<h3 style="margin:6px 0">${p.title}</h3>
+<p class="loc">📍 ${p.location || 'No location'} • ${p.sales||0} sales</p>
+<div class="ratingBox">👤 <b>Seller Rating:</b><br>${ratingHtml}<button onclick="openRate(${idx})" style="background:#FFD500;color:#000;border:0;padding:8px 14px;border-radius:12px;font-weight:bold;margin-top:8px">⭐ Rate Seller</button></div>
+<p style="color:#ccc;margin:8px 0">${p.desc||''}</p>
+<div class="details"><b>Details:</b><br>${(p.details||'No details added')}</div>
+${cheapWarn}
+</div>
+<div class="priceRow"><span class="price">${p.price}</span><span style="color:#aaa;font-size:13px">${p.photos? p.photos.length:0} photos</span></div>
+<button class="buy" onclick="openBuy(${idx})">💬 Buy on WhatsApp</button>
+<p style="font-size:11px;color:#888">Number hidden for safety - tap Buy to reveal</p>
+<div class="actions">
+<button onclick="like(${idx})" class="${p.liked?'liked':''}">❤️ ${p.likes}</button>
+<button onclick="showComments(${idx})">💬 ${p.comments.length}</button>
+<button onclick="report(${idx})">🚩 Report</button>
+<button onclick="blockSeller('${p.whatsapp}')">🚫 Block</button>
+</div>
+<div id="c${idx}" style="display:none">${p.comments.map(c=>`<div class="comment">${c}</div>`).join('')}<input id="nc${idx}" placeholder="Ask about this..."><button onclick="addComment(${idx})" style="background:#fff;color:#000;border:0;padding:8px 14px;border-radius:12px;font-weight:bold">Send</button></div></div>`;
 });
-function postCard(id,p){
-  let author=p.author||'pulse_user';
-  let authorPic=p.authorPic||'https://via.placeholder.com/40';
-  let isMe=currentUser && author===currentUser.username;
-  let meFollowing=currentUser && allProfiles[currentUser.username] ? (allProfiles[currentUser.username].following||[]) : [];
-  let isFollowing=meFollowing.includes(author);
-  let followBtn=!currentUser?'':isMe?'<span class="small">• You</span>':`<button onclick="followUser('${author}',this)" style="padding:6px 10px;background:${isFollowing?'#222':'#00ff88'};color:${isFollowing?'#fff':'#000'};font-size:12px">${isFollowing?'✓ Following':'＋ Follow'}</button>`;
-  let deleteBtn=isMe?`<button onclick="deletePost('${id}')" style="padding:6px 10px;background:#ff0055;color:#fff;font-size:12px;margin-left:auto">🗑️ Delete</button>`:'';
-  let mediaHtml='';
-  if(p.media){
-    if(p.type&&p.type.includes('video')) mediaHtml=`<video src="${p.media}" controls playsinline preload="none" style="width:100%;margin-top:8px"></video>`;
-    else mediaHtml=`<img src="${p.media}" loading="lazy" style="width:100%;margin-top:8px">`;
-  }
-  let musicHtml='';
-  if(p.music && p.music.preview){
-    musicHtml=`<div style="background:#222;padding:8px;border-radius:10px;margin-top:8px;display:flex;gap:8px;align-items:center"><img src="${p.music.artwork||''}" style="width:36px;height:36px"><div style="flex:1"><b style="font-size:13px">🎵 ${p.music.name||'Song'}</b><br><span class="small">${p.music.artist||''}</span></div><audio controls src="${p.music.preview}" style="width:130px"></audio></div>`;
-  }
-  let cat = p.category||'Other';
-  return `<div class="card" id="post-${id}"><div style="display:flex;align-items:center;gap:8px"><img class="pfp" src="${authorPic}" loading="lazy"><b>@${author}</b><span class="catBadge">${CAT_EMOJI[cat]||'✨'} ${cat}</span> ${followBtn} ${deleteBtn}</div><p>${p.caption||''}</p>${mediaHtml}${musicHtml}<br><button onclick="likePost('${id}',${p.likes||0},this)">❤️ ${p.likes||0} Like</button> <button onclick="commentPost('${id}')">💬 Comment</button><div>${(p.comments||[]).map(c=>`<p>💬 ${c}</p>`).join('')}</div></div>`;
+document.getElementById('app').innerHTML=html||'<p style="text-align:center;color:#aaa">No listings here - be the first!</p>';
+document.getElementById('profile').innerText='You have '+posts.length+' listings - Total likes: '+posts.reduce((a,b)=>a+b.likes,0);
 }
-function renderCatPills(){
-  let fypHtml=CATS.map(c=>`<span class="pill ${c===currentCatFYP?'active':''}" onclick="setCatFYP('${c}')">${c==='All'?'🌍 All':(CAT_EMOJI[c]||'')+' '+c}</span>`).join('');
-  document.getElementById('catPillsFYP').innerHTML=fypHtml;
-  let discHtml=CATS.map(c=>`<span class="pill ${c===currentCatDiscover?'active':''}" onclick="setCatDiscover('${c}')">${c==='All'?'🌍 All':(CAT_EMOJI[c]||'')+' '+c}</span>`).join('');
-  document.getElementById('catPillsDiscover').innerHTML=discHtml;
+function openBuy(i){ pendingBuy=posts[i]; document.getElementById('buyModal').style.display='flex'; }
+function closeModal(){ document.getElementById('buyModal').style.display='none'; }
+function confirmBuy(){
+if(!document.getElementById('c1').checked || !document.getElementById('c2').checked || !document.getElementById('c3').checked || !document.getElementById('c4').checked){ alert('Tick all 4 safety boxes to continue'); return; }
+let p=pendingBuy; let msg=encodeURIComponent('Hi! I saw on Pulse: '+p.title+' in '+p.location+' - Is it still available? I want to meet in public to check it.'); closeModal(); window.open('https://wa.me/'+p.whatsapp+'?text='+msg,'_blank');
 }
-function setCatFYP(c){ currentCatFYP=c; renderCatPills(); renderFeeds(); }
-function setCatDiscover(c){ currentCatDiscover=c; renderCatPills(); renderFeeds(); }
-function loadFeed(){
-  fetch(DB).then(r=>r.json()).then(data=>{
-    allFeedData=data||{};
-    allFeedIds=Object.keys(allFeedData).reverse();
-    renderFeeds();
-  });
+function openRate(i){ pendingRateIdx=i; tempStars=0; updateStars(); document.getElementById('rateTitle').innerText='Rate seller of: '+posts[i].title; document.getElementById('rateModal').style.display='flex'; }
+function closeRate(){ document.getElementById('rateModal').style.display='none'; }
+function setStars(n){ tempStars=n; updateStars(); }
+function updateStars(){
+let labels=['','😡 Terrible - Scam','😕 Bad','😐 Okay','🙂 Good','🔥 Excellent - Trusted!'];
+for(let i=1;i<=5;i++){ document.getElementById('s'+i).className='starBtn '+(i<=tempStars?'on':''); }
+document.getElementById('starLabel').innerText=labels[tempStars]||'Tap a star';
 }
-function renderFeeds(){
-  renderCatPills();
-  let posts=allFeedIds.map(id=>({id, ...allFeedData[id]}));
-  let following=currentUser ? (allProfiles[currentUser.username]?.following||[]) : [];
-  let homePosts=posts.filter(p=> currentUser && (following.includes(p.author) || p.author===currentUser.username));
-  document.getElementById('homeFeed').innerHTML = !currentUser ? '<div class="card"><p>Create a profile to see Home. Go to Profile 👤</p></div>' : homePosts.length? homePosts.map(p=>postCard(p.id,p)).join('') : '<div class="card"><p>🏠 Home is empty.<br>You are not following anyone yet.<br>Go to <b>FYP 🔥</b> to find people to follow!</p><button onclick="switchTab(\'fyp\')" style="width:100%">Go to FYP 🔥</button></div>';
-  let fypPosts=[...posts].sort((a,b)=>(b.likes||0)-(a.likes||0));
-  if(currentCatFYP!=='All') fypPosts=fypPosts.filter(p=>(p.category||'Other')===currentCatFYP);
-  document.getElementById('fypFeed').innerHTML = fypPosts.length? fypPosts.map(p=>postCard(p.id,p)).join('') : '<p style="text-align:center;color:#aaa">No posts in this category yet - be first!</p>';
-  let discPosts=posts;
-  if(currentCatDiscover!=='All') discPosts=discPosts.filter(p=>(p.category||'Other')===currentCatDiscover);
-  document.getElementById('discoverFeed').innerHTML = discPosts.slice(0,10).map(p=>postCard(p.id,p)).join('') || '<p class="small">No posts here yet.</p>';
-  let trending=[...posts].sort((a,b)=>(b.likes||0)-(a.likes||0)).slice(0,3);
-  document.getElementById('trendingBox').innerHTML = trending.length? trending.map((p,i)=>`<p><b>${i+1}.</b> @${p.author} - ${p.caption||''} <span style="color:#ff0055">❤️ ${p.likes||0}</span></p>`).join('') : '<p class="small">No trending yet.</p>';
-  let myPosts=0, myLikes=0;
-  Object.keys(allFeedData).forEach(id=>{ let p=allFeedData[id]; if(currentUser && p.author===currentUser.username){ myPosts++; myLikes+=(p.likes||0); } });
-  let le=document.getElementById('myLikesCount'); if(le) le.innerText=myLikes;
-  let pe=document.getElementById('myPostsCount'); if(pe) pe.innerText=myPosts;
-  renderMyPosts();
+function submitRating(){
+if(tempStars==0){ alert('Tap a star first'); return; }
+let p=posts[pendingRateIdx];
+let comment=document.getElementById('rateComment').value||'No comment';
+if(!sellerRatings[p.whatsapp]) sellerRatings[p.whatsapp]=[];
+sellerRatings[p.whatsapp].push({stars:tempStars,comment:comment});
+localStorage.setItem('pulse_ratings',JSON.stringify(sellerRatings));
+document.getElementById('rateComment').value='';
+closeRate(); render(); alert('Thanks! You rated this seller '+tempStars+' stars. This helps everyone stay safe.');
 }
-function renderMyPosts(){
-  if(!currentUser) return;
-  let el=document.getElementById('myPostsFeed'); if(!el) return;
-  let mine=allFeedIds.filter(id=>allFeedData[id].author===currentUser.username);
-  el.innerHTML = mine.length? '<h3 style="text-align:center">Your Posts</h3>'+mine.map(id=>postCard(id,allFeedData[id])).join('') : '<p style="text-align:center;color:#aaa">You have no posts yet. Tap ➕ Post to create one!</p>';
+function like(i){posts[i].likes+=posts[i].liked?-1:1; posts[i].liked=!posts[i].liked; save();}
+function showComments(i){let el=document.getElementById('c'+i); el.style.display=el.style.display=='none'?'block':'none';}
+function addComment(i){let v=document.getElementById('nc'+i).value; if(!v) return; posts[i].comments.push(v); save();}
+function report(i){
+let reason=prompt('Why report?\n1 = Scam\n2 = Fake photos\n3 = Wrong price\n4 = Rude / Spam\nType 1,2,3 or 4');
+if(!reason) return; posts[i].reports=(posts[i].reports||0)+1;
+if(posts[i].reports>=3){ posts.splice(i,1); alert('Listing removed after 3 reports. Thank you for keeping Pulse safe.'); } else { alert('Reported. Reports: '+posts[i].reports+'/3'); } save();
 }
-function doSearch(){
-  let q=document.getElementById('searchInput').value.trim().toLowerCase();
-  let box=document.getElementById('searchResults');
-  if(!q){ box.innerHTML=''; return; }
-  let matched=allFeedIds.filter(id=>{
-    let p=allFeedData[id];
-    return (p.author||'').toLowerCase().includes(q) || (p.caption||'').toLowerCase().includes(q);
-  }).slice(0,5);
-  let users=Object.keys(allProfiles).filter(u=>u.toLowerCase().includes(q)).slice(0,5);
-  box.innerHTML = '<p class="small">Results:</p>' +
-    users.map(u=>`<p>👤 @${u} <button onclick="followUser('${u}',this)" style="padding:4px 8px;font-size:12px">＋ Follow</button></p>`).join('') +
-    matched.map(id=>postCard(id,allFeedData[id])).join('') || '<p class="small">No results.</p>';
+function blockSeller(wa){ if(confirm('Block this seller? You will never see their listings again.')){ blocked.push(wa); localStorage.setItem('pulse_blocked',JSON.stringify(blocked)); render(); } }
+function showSafety(){ alert('🛡️ PULSE SAFETY RULES:\n\n1. NEVER pay before you see it\n2. Meet in PUBLIC - mall, police station, garage\n3. Check product before you pay\n4. NEVER share OTP / PIN\n5. NEVER send courier / delivery money first\n6. Check seller RATING - if below 2.5 stars, don\'t buy\n7. Report scammers - 3 reports = removed\n\nStay safe!'); }
+async function upload(){
+let files=document.getElementById('file').files;
+let title=document.getElementById('title').value;
+let price=document.getElementById('price').value||'0';
+let wa=document.getElementById('whatsapp').value;
+let loc=document.getElementById('location').value;
+let cat=document.getElementById('category').value;
+let details=document.getElementById('details').value;
+let desc=document.getElementById('desc').value;
+if(!document.getElementById('agree').checked){ alert('You must agree to the safety rules to publish'); return; }
+if(!title){alert('Write what you are selling'); return;}
+if(!wa){alert('Add your WhatsApp number'); return;}
+if(!loc){alert('Add your location - Town / Area only, not home address'); return;}
+if(files.length==0){alert('Pick at least 1 photo'); return;}
+if(files.length>4){alert('Max 4 photos'); return;}
+let photos=[];
+for(let f of files){ let data=await new Promise(res=>{let r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(f);}); photos.push(data); }
+posts.unshift({title,price,whatsapp:wa,category:cat,location:loc,details,desc,likes:0,comments:[],photos,liked:false,reports:0,sales:0});
+save(); alert('Published! Remember: Meet in public, no pre-payment.');
+document.getElementById('title').value=''; document.getElementById('price').value=''; document.getElementById('details').value=''; document.getElementById('desc').value=''; document.getElementById('location').value='';
 }
-function deletePost(id){
-  if(!confirm('Delete this post? This cannot be undone.')) return;
-  let el=document.getElementById('post-'+id); if(el) el.remove();
-  delete allFeedData[id]; allFeedIds=allFeedIds.filter(x=>x!==id);
-  fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'DELETE'}).then(()=>renderFeeds());
-}
-function followUser(author,btn){
-  if(!currentUser){alert('Create a profile first');return;}
-  if(author===currentUser.username) return;
-  loadProfiles(()=>{
-    let me=allProfiles[currentUser.username]||currentUser;
-    let them=allProfiles[author]||{username:author,followers:[],following:[]};
-    me.following=me.following||[]; them.followers=them.followers||[];
-    let isFollowing=me.following.includes(author);
-    if(isFollowing){ me.following=me.following.filter(u=>u!==author); them.followers=them.followers.filter(u=>u!==currentUser.username); }
-    else { me.following.push(author); them.followers.push(currentUser.username); }
-    localStorage.setItem('pulse_user',JSON.stringify(me));
-    allProfiles[currentUser.username]=me; allProfiles[author]=them;
-    fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/profiles/${currentUser.username}.json`,{method:'PUT',body:JSON.stringify(me)});
-    fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/profiles/${author}.json`,{method:'PUT',body:JSON.stringify(them)}).then(()=>{renderProfile();renderFeeds();});
-  });
-}
-function likePost(id,likes,btn){btn.innerText='❤️ '+(likes+1)+' Like';fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PATCH',body:JSON.stringify({likes:likes+1})}).then(()=>loadFeed());}
-function commentPost(id){
-  let comment=prompt('Write a comment:'); if(!comment) return;
-  let p=allFeedData[id]; if(!p.comments) p.comments=[];
-  p.comments.push((currentUser?currentUser.username:'guest')+': '+comment);
-  fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PATCH',body:JSON.stringify({comments:p.comments})}).then(()=>loadFeed());
-}
-function publishPost(){
-  let caption=document.getElementById('caption').value.trim();
-  let category=document.getElementById('category').value;
-  let file=document.getElementById('fileInput').files[0];
-  if(!currentUser) return alert('Create profile first - go to Profile 👤');
-  if(!caption && !file) return alert('Write something or pick a photo/video');
-  let btn=document.getElementById('publishBtn'); btn.disabled=true;
-  document.getElementById('publishText').innerText='Preparing...';
-  document.getElementById('bar').style.width='10%';
-  function reset(msg){ document.getElementById('publishText').innerText=msg||''; document.getElementById('bar').style.width='0%'; btn.disabled=false; }
-  let done=(media,type)=>{
-    document.getElementById('publishText').innerText='Publishing...';
-    document.getElementById('bar').style.width='30%';
-    let id='post_'+Date.now();
-    let newPost={author:currentUser.username,authorPic:currentUser.pfp||'https://via.placeholder.com/40',caption:caption,category:category,media:media||'',type:type||'',music:selectedMusic||null,likes:0,comments:[],time:Date.now()};
-    fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PUT',body:JSON.stringify(newPost)}).then(()=>{
-      document.getElementById('caption').value=''; document.getElementById('fileInput').value=''; document.getElementById('previewArea').innerHTML=''; document.getElementById('musicResults').innerHTML=''; document.getElementById('selectedMusicText').innerText=''; selectedMusic=null;
-      document.getElementById('bar').style.width='100%'; document.getElementById('publishText').innerText='Published ✅'; btn.disabled=false;
-      setTimeout(()=>{document.getElementById('bar').style.width='0%';},1000);
-      loadFeed(); switchTab('home');
-    }).catch(e=>{ alert('Publish failed: '+e.message); reset('Failed'); });
-  };
-  if(!file){ done('',''); return; }
-  if(file.type.includes('video')){
-    if(file.size>5*1024*1024){ alert('Video too big! Must be 30 seconds or less and under 5MB.'); reset(''); return; }
-    let v=document.createElement('video'); v.preload='metadata';
-    v.onloadedmetadata=()=>{ URL.revokeObjectURL(v.src); if(v.duration>30){ alert('Video too long! Max 30 seconds. Yours is '+Math.round(v.duration)+' seconds.'); reset(''); return; } let r=new FileReader(); r.onload=()=>done(r.result,file.type); r.onerror=()=>{ alert('Could not read video'); reset(''); }; r.readAsDataURL(file); };
-    v.onerror=()=>{ alert('Could not read video'); reset(''); };
-    v.src=URL.createObjectURL(file); return;
-  }
-  if(file.type.includes('image')){ compressImage(file,(s)=>done(s,file.type),600,0.5); return; }
-  alert('Only photos and videos allowed'); reset('');
-}
-loadProfiles(()=>{ renderProfile(); loadFeed(); });
+function save(){localStorage.setItem('pulse',JSON.stringify(posts)); render();}
+renderCats(); render();
 </script>
 </body>
 </html>
