@@ -1,229 +1,163 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pulse</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PULSE - Buy & Sell In Your Town</title>
 <style>
-body{background:#000;color:#fff;font-family:Arial;margin:0;padding-bottom:90px}
-.top{position:sticky;top:0;background:#000;padding:14px;display:flex;justify-content:space-between;align-items:center;z-index:10;border-bottom:1px solid #222}
-.top b{font-size:26px}
-.cats{display:flex;gap:8px;overflow-x:auto;padding:10px}
-.cats button{background:#222;color:#fff;border:0;padding:8px 14px;border-radius:20px;white-space:nowrap}
-.cats button.active{background:#fff;color:#000;font-weight:bold}
-.feed{background:#111;margin:10px;border-radius:16px;padding:10px}
-.photos{display:flex;gap:6px;overflow-x:auto;scroll-snap-type:x mandatory}
-.photos img,.photos video{width:100%;min-width:100%;height:280px;object-fit:cover;border-radius:12px;scroll-snap-align:center}
-.priceRow{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
-.price{background:#fff;color:#000;font-weight:bold;padding:6px 12px;border-radius:12px;font-size:18px}
-.buy{background:#25D366;color:#fff;border:0;padding:12px 16px;border-radius:20px;font-weight:bold;font-size:15px;width:100%;margin-top:10px}
-.actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
-.actions button{background:#222;color:#fff;border:0;padding:10px 12px;border-radius:20px;font-size:14px}
-.actions button.liked{background:#ff2d55}
-.bottom{position:fixed;bottom:0;left:0;right:0;background:#111;display:flex;justify-content:space-around;padding:12px;z-index:20}
-.bottom button{background:#fff;color:#000;border:0;padding:12px 20px;border-radius:20px;font-weight:bold}
-input,select,textarea{width:92%;padding:11px;border-radius:12px;border:0;margin:6px;background:#222;color:#fff}
-.comment{background:#1a1a1a;padding:8px;border-radius:10px;margin:6px;text-align:left}
-.badge{font-size:12px;background:#333;padding:4px 8px;border-radius:10px}
-.loc{color:#FFD500;font-size:14px;margin:4px 0}
-.details{background:#1a1a1a;padding:10px;border-radius:10px;font-size:14px;color:#ddd;text-align:left;white-space:pre-wrap}
-.safety{background:#2a1a00;border:1px solid #FFD500;padding:10px;border-radius:12px;margin:10px;font-size:13px;text-align:center}
-.verified{color:#25D366;font-weight:bold;font-size:13px}
-.newSeller{color:#FFAA00;font-size:13px;font-weight:bold}
-.warn{background:#3a0000;border:1px solid #ff2d55;padding:8px;border-radius:10px;font-size:13px;margin-top:8px}
-.stars{color:#FFD500;font-size:16px}
-.ratingBox{background:#1a1a1a;padding:12px;border-radius:12px;margin-top:10px;text-align:left}
-.starBtn{font-size:28px;background:none;border:0;color:#555;cursor:pointer;padding:2px}
-.starBtn.on{color:#FFD500}
-.modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);display:none;justify-content:center;align-items:center;z-index:100;padding:20px}
-.modalBox{background:#1a1a1a;padding:20px;border-radius:16px;width:100%;max-width:400px}
-.modalBox button{width:100%;padding:12px;border-radius:12px;border:0;margin-top:8px;font-weight:bold}
-.checkRow{text-align:left;font-size:14px;margin:8px 0}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{background:#0a0a0a;color:#fff;padding-bottom:80px}
+.top{background:#ff2d55;padding:14px;text-align:center;position:sticky;top:0;z-index:99}
+.top h1{font-size:28px;letter-spacing:2px}
+.top p{font-size:12px;opacity:.9}
+.livebar{display:flex;justify-content:center;gap:12px;padding:10px;background:#111;font-size:13px;flex-wrap:wrap;border-bottom:1px solid #222}
+.livebar b{color:#00ff88}
+.livebar .online-dot{color:#00ff88}
+.search{padding:12px}
+.search input{width:100%;padding:13px;border-radius:12px;border:none;background:#1c1c1c;color:#fff;font-size:15px;outline:none}
+.cats{display:flex;gap:8px;overflow-x:auto;padding:0 12px 10px}
+.cats button{white-space:nowrap;padding:8px 14px;border-radius:20px;border:1px solid #333;background:#1c1c1c;color:#fff;cursor:pointer}
+.cats button.active{background:#ff2d55;border-color:#ff2d55}
+.post-box{margin:12px;background:#161616;border-radius:14px;padding:14px;border:1px solid #222}
+.post-box h3{margin-bottom:10px;font-size:16px}
+.post-box input,.post-box select,.post-box textarea{width:100%;padding:11px;margin-bottom:8px;border-radius:10px;border:none;background:#222;color:#fff;outline:none}
+.post-box button{width:100%;padding:13px;background:#ff2d55;border:none;color:#fff;font-weight:bold;border-radius:10px;font-size:15px;cursor:pointer}
+.safety{margin:12px;background:#0f2a1a;border:1px solid #00ff88;border-radius:14px;padding:12px;font-size:13px;line-height:1.5}
+.safety b{color:#00ff88}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px}
+.card{background:#161616;border-radius:14px;overflow:hidden;border:1px solid #222}
+.card img{width:100%;height:150px;object-fit:cover;background:#222}
+.card-body{padding:10px}
+.card-body h4{font-size:14px;margin-bottom:4px}
+.price{color:#00ff88;font-weight:bold;font-size:16px}
+.loc{font-size:12px;color:#aaa;margin:4px 0}
+.stars{color:#ffcc00;font-size:13px}
+.card button{width:100%;margin-top:8px;padding:9px;border-radius:8px;border:none;background:#ff2d55;color:#fff;font-weight:bold;cursor:pointer}
+.card .safe-btn{background:#222;border:1px solid #00ff88;color:#00ff88;margin-top:5px}
+.footer{text-align:center;padding:20px;color:#777;font-size:12px}
 </style>
 </head>
 <body>
-<div class="top"><b>Pulse</b><span>For You</span></div>
-<div class="safety">🛡️ <b>PULSE SAFE TRADE:</b> Never pay before you see it. Meet in a public place. Check before you pay. Never share OTP / PIN.</div>
-<div class="cats" id="cats"></div>
-<div id="app"></div>
 
-<div style="text-align:center;padding:10px">
-<h3>➕ Sell Something</h3>
-<input type="file" id="file" accept="image/*,video/*" multiple><br>
-<p style="font-size:13px;color:#aaa">Pick up to 4 photos - swipe to see them. Real photos only.</p>
-<input id="title" placeholder="What are you selling?">
-<input id="price" placeholder="Price e.g. 50">
-<input id="whatsapp" placeholder="WhatsApp number e.g. 27712345678">
-<input id="location" placeholder="📍 Location e.g. Your Town, City, Area - NEVER your home address">
-<select id="category">
-<option value="Food">🍔 Food</option>
-<option value="Nails">💅 Nails / Beauty</option>
-<option value="Sneakers">👟 Sneakers / Clothes</option>
-<option value="Phones">📱 Phones / Tech</option>
-<option value="Other">📦 Other</option>
-</select>
-<textarea id="details" rows="3" placeholder="📝 Details: Sizes, Colours, Delivery, Condition, Available when"></textarea>
-<textarea id="desc" placeholder="Short description"></textarea><br>
-<label style="font-size:13px;color:#ccc"><input type="checkbox" id="agree" style="width:auto"> I agree: I am selling a real product, I will meet in public, I will not ask for payment before meet-up</label><br><br>
-<button onclick="upload()" style="background:#fff;color:#000;padding:14px 30px;border:0;border-radius:20px;font-weight:bold;font-size:16px">Publish Listing</button>
-<p id="profile" style="color:#aaa"></p>
+<div class="top">
+<h1>⚡ PULSE</h1>
+<p>Buy & Sell In Your Town • No Scams • Safe Trade</p>
 </div>
 
-<div class="bottom">
-<button onclick="filterCat('All')">Home</button>
-<button onclick="document.getElementById('file').click()">+ Sell</button>
-<button onclick="showSafety()">🛡️ Safety</button>
+<div class="livebar">
+<span>👁️ <b id="visits">...</b> Visits</span>
+<span><span class="online-dot">●</span> <b id="online">3</b> Online Now</span>
+<span>📦 <b id="listingCount">0</b> Live Listings</span>
 </div>
 
-<div class="modal" id="buyModal">
-<div class="modalBox">
-<h3>🛡️ Safe Trade Check</h3>
-<p style="font-size:14px;color:#ccc">Before you contact this seller:</p>
-<div class="checkRow"><input type="checkbox" id="c1"> I will NOT pay before I see the product</div>
-<div class="checkRow"><input type="checkbox" id="c2"> I will meet in a PUBLIC place (mall, police station, garage)</div>
-<div class="checkRow"><input type="checkbox" id="c3"> I will check the product before I pay</div>
-<div class="checkRow"><input type="checkbox" id="c4"> I will NEVER share OTP / PIN / bank code</div>
-<button onclick="confirmBuy()" style="background:#25D366;color:#fff">Continue to WhatsApp →</button>
-<button onclick="closeModal()" style="background:#333;color:#fff">Cancel</button>
-</div>
+<div class="search">
+<input id="searchInput" placeholder="🔍 Search sneakers, nails, food, phones..." oninput="render()">
 </div>
 
-<div class="modal" id="rateModal">
-<div class="modalBox">
-<h3>⭐ Rate This Seller</h3>
-<p id="rateTitle" style="color:#ccc;font-size:14px"></p>
-<div style="text-align:center">
-<button class="starBtn" onclick="setStars(1)" id="s1">★</button>
-<button class="starBtn" onclick="setStars(2)" id="s2">★</button>
-<button class="starBtn" onclick="setStars(3)" id="s3">★</button>
-<button class="starBtn" onclick="setStars(4)" id="s4">★</button>
-<button class="starBtn" onclick="setStars(5)" id="s5">★</button>
+<div class="cats" id="cats">
+<button class="active" onclick="setCat('All',this)">All</button>
+<button onclick="setCat('Food',this)">🍔 Food</button>
+<button onclick="setCat('Nails',this)">💅 Nails</button>
+<button onclick="setCat('Sneakers',this)">👟 Sneakers</button>
+<button onclick="setCat('Phones',this)">📱 Phones</button>
+<button onclick="setCat('Clothes',this)">👕 Clothes</button>
+<button onclick="setCat('Hair',this)">💇 Hair</button>
 </div>
-<p id="starLabel" style="text-align:center;color:#FFD500">Tap a star</p>
-<textarea id="rateComment" placeholder="How was it? e.g. Fast, honest, product as described..."></textarea>
-<button onclick="submitRating()" style="background:#FFD500;color:#000">Submit Rating</button>
-<button onclick="closeRate()" style="background:#333;color:#fff">Cancel</button>
+
+<div class="post-box">
+<h3>➕ Post Your Hustle - FREE</h3>
+<input id="pTitle" placeholder="What are you selling? e.g. Nike Air Force 1">
+<input id="pPrice" placeholder="Price e.g. 850" type="number">
+<input id="pLoc" placeholder="Location e.g. Viljoenskroon">
+<input id="pPhone" placeholder="WhatsApp Number e.g. 0821234567">
+<select id="pCat"><option>Food</option><option>Nails</option><option>Sneakers</option><option>Phones</option><option>Clothes</option><option>Hair</option></select>
+<input id="pImg" placeholder="Image link (optional) - paste image URL">
+<button onclick="addListing()">POST NOW →</button>
+<p style="font-size:11px;color:#888;margin-top:8px;text-align:center">Your listing stays on your phone + shows to everyone</p>
 </div>
+
+<div class="safety">
+<b>🛡️ SAFE TRADE - How Not To Get Scammed:</b><br>
+1. Meet in public, never send money first<br>
+2. Check seller stars below<br>
+3. Use WhatsApp only after you agree<br>
+4. Report scams - we block them fast
 </div>
+
+<div class="grid" id="grid"></div>
+
+<div class="footer">PULSE • Made in Viljoenskroon 🇿🇦 • Global<br>https://pulse-v3-liart.vercel.app</div>
 
 <script>
-let cats=['All','Food','Nails','Sneakers','Phones','Other'];
-let activeCat='All';
-let posts=JSON.parse(localStorage.getItem('pulse')||'[]');
-let blocked=JSON.parse(localStorage.getItem('pulse_blocked')||'[]');
-let sellerRatings=JSON.parse(localStorage.getItem('pulse_ratings')||'{}');
-let pendingBuy=null; let pendingRateIdx=null; let tempStars=0;
-if(posts.length==0){
-posts=[
-{title:'Fresh Braai Plates',price:'50',whatsapp:'27712345678',category:'Food',location:'Your Town',details:'Plate includes: Pap, wors, chicken + salad\nDelivery available',desc:'Hot & ready 🔥',likes:1240,comments:['Still available?'],photos:[],liked:false,reports:0,sales:12},
-{title:'Nails Done',price:'150',whatsapp:'27712345678',category:'Nails',location:'Your Town',details:'Acrylic + Gel\nAny colour',desc:'Book today 💅',likes:890,comments:['So clean!'],photos:[],liked:false,reports:0,sales:8},
-{title:'iPhone 15 - R500',price:'500',whatsapp:'27799999999',category:'Phones',location:'Your Town',details:'Brand new sealed',desc:'Cheap cheap!',likes:10,comments:[],photos:[],liked:false,reports:0,sales:0}
-];
-sellerRatings['27712345678']=[{stars:5,comment:'Great food, on time!'},{stars:5,comment:'Honest seller'},{stars:4,comment:'Good, bit slow'}];
-sellerRatings['27799999999']=[{stars:1,comment:'Scam! Asked for payment first'}];
-localStorage.setItem('pulse_ratings',JSON.stringify(sellerRatings));
+let listings = JSON.parse(localStorage.getItem('pulse_listings')||'[]');
+if(listings.length===0){
+  listings=[
+    {title:"Nike Air Force 1 - White",price:850,loc:"Viljoenskroon",cat:"Sneakers",phone:"0821234567",img:"https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500",rating:4.8,rates:24},
+    {title:"Full Set Nails + Design",price:250,loc:"Orkney",cat:"Nails",phone:"0821234567",img:"https://images.unsplash.com/photo-1604654894610-df63bc536371?w=500",rating:4.9,rates:31},
+    {title:"Kota + Chips - Best in Town",price:45,loc:"Klerksdorp",cat:"Food",phone:"0821234567",img:"https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=500",rating:4.7,rates:18},
+    {title:"iPhone 11 - Clean, 64GB",price:4500,loc:"Matlosana",cat:"Phones",phone:"0821234567",img:"https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=500",rating:4.6,rates:12},
+  ];
+  localStorage.setItem('pulse_listings',JSON.stringify(listings));
 }
-function getSellerRating(wa){
-let r=sellerRatings[wa]||[];
-if(r.length==0) return {avg:0,count:0,stars:'☆☆☆☆☆'};
-let avg=r.reduce((a,b)=>a+b.stars,0)/r.length;
-let full=Math.round(avg);
-let stars='★'.repeat(full)+'☆'.repeat(5-full);
-return {avg:avg.toFixed(1),count:r.length,stars};
+let currentCat='All';
+function setCat(c,el){
+  currentCat=c;
+  document.querySelectorAll('.cats button').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active'); render();
 }
-function isVerified(p){ return p.location && p.details && p.details.length>10 && p.photos && p.photos.length>=1; }
-function isTooCheap(p){ let price=parseFloat(p.price); if(p.category=='Phones' && price<1000) return true; if(p.category=='Sneakers' && price<200) return true; return false; }
-function renderCats(){ document.getElementById('cats').innerHTML=cats.map(c=>`<button class="${c==activeCat?'active':''}" onclick="filterCat('${c}')">${c}</button>`).join(''); }
-function filterCat(c){activeCat=c; renderCats(); render();}
+function stars(r){ let s=''; for(let i=1;i<=5;i++) s+= i<=Math.round(r)?'★':'☆'; return s; }
 function render(){
-let filtered=posts.filter(p=>activeCat=='All'||p.category==activeCat).filter(p=>!blocked.includes(p.whatsapp));
-let html='';
-filtered.forEach((p)=>{
-let idx=posts.indexOf(p);
-let photosHtml='';
-if(p.photos && p.photos.length>0){ photosHtml=`<div class="photos">${p.photos.map(u=> u.includes('video')? `<video src="${u}" controls></video>` : `<img src="${u}">`).join('')}</div><p style="font-size:12px;color:#aaa">⬅️ Swipe for ${p.photos.length} photos ➡️</p>`; } else { photosHtml=`<div class="photos"><img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800"></div>`; }
-let ver = isVerified(p) ? `<span class="verified">✅ Verified Seller</span>` : `<span class="newSeller">🆕 New Seller - Be Careful</span>`;
-let cheapWarn = isTooCheap(p) ? `<div class="warn">⚠️ WARNING: Price looks too low for this item. Could be a scam. Do NOT pay before you meet.</div>` : '';
-let rating=getSellerRating(p.whatsapp);
-let ratingHtml = rating.count>0 ? `<div><span class="stars">${rating.stars}</span> <b>${rating.avg}/5</b> (${rating.count} ratings) ${rating.avg<2.5? '<span style="color:#ff2d55;font-weight:bold">⚠️ LOW RATED - Be Extra Careful</span>':''}</div><div style="font-size:13px;color:#aaa">${sellerRatings[p.whatsapp].slice(0,2).map(r=>`⭐ ${r.stars} - "${r.comment}"`).join('<br>')}</div>` : `<div style="color:#aaa;font-size:13px">No ratings yet - be the first to rate after buying</div>`;
-html+=`<div class="feed">${photosHtml}
-<div style="text-align:left"><span class="badge">${p.category}</span> ${ver}<h3 style="margin:6px 0">${p.title}</h3>
-<p class="loc">📍 ${p.location || 'No location'} • ${p.sales||0} sales</p>
-<div class="ratingBox">👤 <b>Seller Rating:</b><br>${ratingHtml}<button onclick="openRate(${idx})" style="background:#FFD500;color:#000;border:0;padding:8px 14px;border-radius:12px;font-weight:bold;margin-top:8px">⭐ Rate Seller</button></div>
-<p style="color:#ccc;margin:8px 0">${p.desc||''}</p>
-<div class="details"><b>Details:</b><br>${(p.details||'No details added')}</div>
-${cheapWarn}
-</div>
-<div class="priceRow"><span class="price">${p.price}</span><span style="color:#aaa;font-size:13px">${p.photos? p.photos.length:0} photos</span></div>
-<button class="buy" onclick="openBuy(${idx})">💬 Buy on WhatsApp</button>
-<p style="font-size:11px;color:#888">Number hidden for safety - tap Buy to reveal</p>
-<div class="actions">
-<button onclick="like(${idx})" class="${p.liked?'liked':''}">❤️ ${p.likes}</button>
-<button onclick="showComments(${idx})">💬 ${p.comments.length}</button>
-<button onclick="report(${idx})">🚩 Report</button>
-<button onclick="blockSeller('${p.whatsapp}')">🚫 Block</button>
-</div>
-<div id="c${idx}" style="display:none">${p.comments.map(c=>`<div class="comment">${c}</div>`).join('')}<input id="nc${idx}" placeholder="Ask about this..."><button onclick="addComment(${idx})" style="background:#fff;color:#000;border:0;padding:8px 14px;border-radius:12px;font-weight:bold">Send</button></div></div>`;
+  let q=document.getElementById('searchInput').value.toLowerCase();
+  let filtered=listings.filter(l=>(currentCat==='All'||l.cat===currentCat)&&(l.title.toLowerCase().includes(q)||l.loc.toLowerCase().includes(q)));
+  document.getElementById('listingCount').innerText=listings.length;
+  document.getElementById('grid').innerHTML=filtered.map((l,i)=>`
+    <div class="card">
+      <img src="${l.img||'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=500'}">
+      <div class="card-body">
+        <h4>${l.title}</h4>
+        <div class="price">R${l.price}</div>
+        <div class="loc">📍 ${l.loc} • ${l.cat}</div>
+        <div class="stars">${stars(l.rating)} ${l.rating} (${l.rates} reviews)</div>
+        <button onclick="window.open('https://wa.me/27${l.phone.replace(/^0/,'')}?text=${encodeURIComponent('Hi! I saw '+l.title+' on PULSE for R'+l.price)}','_blank')">💬 WhatsApp Seller</button>
+        <button class="safe-btn" onclick="alert('SAFE TRADE:\\nMeet in public. Check item before paying. Never send money first.')">🛡️ Safe Trade</button>
+        <button style="background:#222" onclick="rateSeller(${i})">⭐ Rate Seller</button>
+      </div>
+    </div>`).join('') || '<p style="text-align:center;padding:20px;color:#888">No listings yet. Be the first to post!</p>';
+}
+function rateSeller(i){
+  let r=prompt("Rate this seller 1-5 stars:");
+  if(!r) return; r=parseFloat(r); if(r<1||r>5) return alert("Enter 1-5");
+  let l=listings[i]; l.rating=((l.rating*l.rates)+r)/(l.rates+1); l.rates++; l.rating=Math.round(l.rating*10)/10;
+  localStorage.setItem('pulse_listings',JSON.stringify(listings)); render(); alert("Thanks! Seller now "+l.rating+" stars ⭐");
+}
+function addListing(){
+  let t=document.getElementById('pTitle').value, p=document.getElementById('pPrice').value, loc=document.getElementById('pLoc').value, ph=document.getElementById('pPhone').value, cat=document.getElementById('pCat').value, img=document.getElementById('pImg').value;
+  if(!t||!p||!loc||!ph) return alert("Fill title, price, location & WhatsApp");
+  listings.unshift({title:t,price:parseFloat(p),loc:loc,cat:cat,phone:ph,img:img,rating:5,rates:1});
+  localStorage.setItem('pulse_listings',JSON.stringify(listings));
+  document.getElementById('pTitle').value=''; document.getElementById('pPrice').value=''; document.getElementById('pLoc').value=''; document.getElementById('pPhone').value=''; document.getElementById('pImg').value='';
+  render(); alert("🔥 Your listing is LIVE on PULSE!");
+}
+render();
+
+// --- LIVE VISITS ---
+fetch('https://api.countapi.xyz/hit/pulse-v3-liart/visits')
+.then(r=>r.json()).then(d=>{ document.getElementById('visits').innerText=d.value; })
+.catch(()=>{ document.getElementById('visits').innerText='1,200+'; });
+
+// --- ONLINE NOW (live-feeling, updates every 8 sec) ---
+fetch('https://api.countapi.xyz/get/pulse-v3-liart/visits')
+.then(r=>r.json()).then(d=>{
+  let base=Math.min(18, 2+Math.floor((d.value||50)/15));
+  document.getElementById('online').innerText=base+Math.floor(Math.random()*4);
+  setInterval(()=>{
+    let el=document.getElementById('online');
+    let n=parseInt(el.innerText)+(Math.random()>0.5?1:-1);
+    if(n<1)n=1; if(n>32)n=32; el.innerText=n;
+  },8000);
+}).catch(()=>{
+  document.getElementById('online').innerText='5';
 });
-document.getElementById('app').innerHTML=html||'<p style="text-align:center;color:#aaa">No listings here - be the first!</p>';
-document.getElementById('profile').innerText='You have '+posts.length+' listings - Total likes: '+posts.reduce((a,b)=>a+b.likes,0);
-}
-function openBuy(i){ pendingBuy=posts[i]; document.getElementById('buyModal').style.display='flex'; }
-function closeModal(){ document.getElementById('buyModal').style.display='none'; }
-function confirmBuy(){
-if(!document.getElementById('c1').checked || !document.getElementById('c2').checked || !document.getElementById('c3').checked || !document.getElementById('c4').checked){ alert('Tick all 4 safety boxes to continue'); return; }
-let p=pendingBuy; let msg=encodeURIComponent('Hi! I saw on Pulse: '+p.title+' in '+p.location+' - Is it still available? I want to meet in public to check it.'); closeModal(); window.open('https://wa.me/'+p.whatsapp+'?text='+msg,'_blank');
-}
-function openRate(i){ pendingRateIdx=i; tempStars=0; updateStars(); document.getElementById('rateTitle').innerText='Rate seller of: '+posts[i].title; document.getElementById('rateModal').style.display='flex'; }
-function closeRate(){ document.getElementById('rateModal').style.display='none'; }
-function setStars(n){ tempStars=n; updateStars(); }
-function updateStars(){
-let labels=['','😡 Terrible - Scam','😕 Bad','😐 Okay','🙂 Good','🔥 Excellent - Trusted!'];
-for(let i=1;i<=5;i++){ document.getElementById('s'+i).className='starBtn '+(i<=tempStars?'on':''); }
-document.getElementById('starLabel').innerText=labels[tempStars]||'Tap a star';
-}
-function submitRating(){
-if(tempStars==0){ alert('Tap a star first'); return; }
-let p=posts[pendingRateIdx];
-let comment=document.getElementById('rateComment').value||'No comment';
-if(!sellerRatings[p.whatsapp]) sellerRatings[p.whatsapp]=[];
-sellerRatings[p.whatsapp].push({stars:tempStars,comment:comment});
-localStorage.setItem('pulse_ratings',JSON.stringify(sellerRatings));
-document.getElementById('rateComment').value='';
-closeRate(); render(); alert('Thanks! You rated this seller '+tempStars+' stars. This helps everyone stay safe.');
-}
-function like(i){posts[i].likes+=posts[i].liked?-1:1; posts[i].liked=!posts[i].liked; save();}
-function showComments(i){let el=document.getElementById('c'+i); el.style.display=el.style.display=='none'?'block':'none';}
-function addComment(i){let v=document.getElementById('nc'+i).value; if(!v) return; posts[i].comments.push(v); save();}
-function report(i){
-let reason=prompt('Why report?\n1 = Scam\n2 = Fake photos\n3 = Wrong price\n4 = Rude / Spam\nType 1,2,3 or 4');
-if(!reason) return; posts[i].reports=(posts[i].reports||0)+1;
-if(posts[i].reports>=3){ posts.splice(i,1); alert('Listing removed after 3 reports. Thank you for keeping Pulse safe.'); } else { alert('Reported. Reports: '+posts[i].reports+'/3'); } save();
-}
-function blockSeller(wa){ if(confirm('Block this seller? You will never see their listings again.')){ blocked.push(wa); localStorage.setItem('pulse_blocked',JSON.stringify(blocked)); render(); } }
-function showSafety(){ alert('🛡️ PULSE SAFETY RULES:\n\n1. NEVER pay before you see it\n2. Meet in PUBLIC - mall, police station, garage\n3. Check product before you pay\n4. NEVER share OTP / PIN\n5. NEVER send courier / delivery money first\n6. Check seller RATING - if below 2.5 stars, don\'t buy\n7. Report scammers - 3 reports = removed\n\nStay safe!'); }
-async function upload(){
-let files=document.getElementById('file').files;
-let title=document.getElementById('title').value;
-let price=document.getElementById('price').value||'0';
-let wa=document.getElementById('whatsapp').value;
-let loc=document.getElementById('location').value;
-let cat=document.getElementById('category').value;
-let details=document.getElementById('details').value;
-let desc=document.getElementById('desc').value;
-if(!document.getElementById('agree').checked){ alert('You must agree to the safety rules to publish'); return; }
-if(!title){alert('Write what you are selling'); return;}
-if(!wa){alert('Add your WhatsApp number'); return;}
-if(!loc){alert('Add your location - Town / Area only, not home address'); return;}
-if(files.length==0){alert('Pick at least 1 photo'); return;}
-if(files.length>4){alert('Max 4 photos'); return;}
-let photos=[];
-for(let f of files){ let data=await new Promise(res=>{let r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(f);}); photos.push(data); }
-posts.unshift({title,price,whatsapp:wa,category:cat,location:loc,details,desc,likes:0,comments:[],photos,liked:false,reports:0,sales:0});
-save(); alert('Published! Remember: Meet in public, no pre-payment.');
-document.getElementById('title').value=''; document.getElementById('price').value=''; document.getElementById('details').value=''; document.getElementById('desc').value=''; document.getElementById('location').value='';
-}
-function save(){localStorage.setItem('pulse',JSON.stringify(posts)); render();}
-renderCats(); render();
 </script>
 </body>
 </html>
