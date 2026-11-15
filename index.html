@@ -19,13 +19,12 @@ body{background:#0a0a0a;color:#fff;padding-bottom:80px}
 .cats button.active{background:#ff2d55;border-color:#ff2d55}
 .post-box{margin:12px;background:#161616;border-radius:14px;padding:14px;border:1px solid #222}
 .post-box h3{margin-bottom:10px;font-size:16px}
-.post-box input,.post-box select,.post-box textarea{width:100%;padding:11px;margin-bottom:8px;border-radius:10px;border:none;background:#222;color:#fff;outline:none}
+.post-box input,.post-box select{width:100%;padding:11px;margin-bottom:8px;border-radius:10px;border:none;background:#222;color:#fff;outline:none}
 .post-box button{width:100%;padding:13px;background:#ff2d55;border:none;color:#fff;font-weight:bold;border-radius:10px;font-size:15px;cursor:pointer}
-.upload-box{border:2px dashed #ff2d55;border-radius:12px;padding:14px;text-align:center;margin-bottom:8px;background:#1a0f14;cursor:pointer}
-.upload-box p{font-size:13px;line-height:1.4}
-.upload-box span{color:#ff2d55;font-weight:bold}
+.upload-label{display:block;border:2px dashed #ff2d55;border-radius:12px;padding:16px;text-align:center;margin-bottom:8px;background:#1a0f14;cursor:pointer}
+.upload-label b{color:#ff2d55}
 .preview{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
-.preview img{width:62px;height:62px;object-fit:cover;border-radius:8px;border:2px solid #333}
+.preview img{width:62px;height:62px;object-fit:cover;border-radius:8px;border:2px solid #00ff88}
 .preview .count{width:62px;height:62px;border-radius:8px;background:#222;display:flex;align-items:center;justify-content:center;font-size:12px;color:#00ff88;font-weight:bold}
 .safety{margin:12px;background:#0f2a1a;border:1px solid #00ff88;border-radius:14px;padding:12px;font-size:13px;line-height:1.5}
 .safety b{color:#00ff88}
@@ -46,22 +45,10 @@ body{background:#0a0a0a;color:#fff;padding-bottom:80px}
 </head>
 <body>
 
-<div class="top">
-<h1>⚡ PULSE</h1>
-<p>Buy & Sell In Your Town • No Scams • Safe Trade</p>
-</div>
-
-<div class="livebar">
-<span>👁️ <b id="visits">...</b> Visits</span>
-<span>🟢 <b id="online">3</b> Online Now</span>
-<span>📦 <b id="listingCount">0</b> Live Listings</span>
-</div>
-
-<div class="search">
-<input id="searchInput" placeholder="🔍 Search cars, electronics, sneakers, nails..." oninput="render()">
-</div>
-
-<div class="cats" id="cats">
+<div class="top"><h1>⚡ PULSE</h1><p>Buy & Sell In Your Town • No Scams • Safe Trade</p></div>
+<div class="livebar"><span>👁️ <b id="visits">...</b> Visits</span><span>🟢 <b id="online">3</b> Online Now</span><span>📦 <b id="listingCount">0</b> Live Listings</span></div>
+<div class="search"><input id="searchInput" placeholder="🔍 Search cars, electronics, sneakers, nails..." oninput="render()"></div>
+<div class="cats">
 <button class="active" onclick="setCat('All',this)">All</button>
 <button onclick="setCat('Food',this)">🍔 Food</button>
 <button onclick="setCat('Nails',this)">💅 Nails</button>
@@ -81,23 +68,20 @@ body{background:#0a0a0a;color:#fff;padding-bottom:80px}
 <input id="pPhone" placeholder="WhatsApp Number e.g. 0821234567">
 <select id="pCat"><option>Food</option><option>Nails</option><option>Sneakers</option><option>Phones</option><option>Electronics</option><option>Cars</option><option>Clothes</option><option>Hair</option></select>
 
-<div class="upload-box" onclick="document.getElementById('pFiles').click()">
-<p><span>📸 TAP TO ADD PHOTOS</span><br>Minimum <b>5 photos</b> required<br>Pick from gallery / camera<br><small id="photoStatus">0 / 5 photos added</small></p>
-<input type="file" id="pFiles" accept="image/*" multiple hidden onchange="handlePhotos(this)">
-</div>
+<!-- FIXED UPLOAD: label triggers file picker properly on phones -->
+<label class="upload-label" for="pFiles">
+<b>📸 TAP HERE TO ADD PHOTOS</b><br>
+Minimum <b>5 photos</b> required<br>
+<span id="photoStatus" style="color:#fff">0 / 5 photos added</span><br>
+<small style="color:#aaa">Tap to open gallery / camera. Tap a preview to remove it.</small>
+</label>
+<input type="file" id="pFiles" accept="image/*" multiple style="display:none">
 <div class="preview" id="preview"></div>
 
 <button onclick="addListing()">POST NOW →</button>
-<p style="font-size:11px;color:#888;margin-top:8px;text-align:center">Buyers trust listings with 5+ photos way more</p>
 </div>
 
-<div class="safety">
-<b>🛡️ SAFE TRADE:</b><br>
-1. Meet in public, never send money first<br>
-2. Check seller stars<br>
-3. For CARS: Check papers + test drive before paying
-</div>
-
+<div class="safety"><b>🛡️ SAFE TRADE:</b><br>1. Meet in public, never send money first<br>2. Check seller stars<br>3. For CARS: Check papers + test drive before paying</div>
 <div class="grid" id="grid"></div>
 <div class="footer">PULSE • Made in Viljoenskroon 🇿🇦 • Global<br>https://pulse-v3-liart.vercel.app</div>
 
@@ -109,31 +93,51 @@ if(listings.length===0){
     {title:"VW Polo 1.4 - 2018, Clean",price:89900,loc:"Klerksdorp",cat:"Cars",phone:"0821234567",images:["https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=500","https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=500","https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=500","https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=500","https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=500"],rating:4.9,rates:32},
     {title:"PS5 + 2 Controllers",price:9500,loc:"Matlosana",cat:"Electronics",phone:"0821234567",images:["https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=500","https://images.unsplash.com/photo-1622297845775-5ff3fef71d13?w=500","https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=500","https://images.unsplash.com/photo-1592840496694-26d035b52b48?w=500","https://images.unsplash.com/photo-1486401899868-0e435ed85128?w=500"],rating:4.8,rates:21},
     {title:"Nike Air Force 1 - White",price:850,loc:"Viljoenskroon",cat:"Sneakers",phone:"0821234567",images:["https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500","https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=500","https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?w=500","https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=500","https://images.unsplash.com/photo-1605348532760-6753d2c43329?w=500"],rating:4.8,rates:24},
-    {title:"Full Set Nails + Design",price:250,loc:"Orkney",cat:"Nails",phone:"0821234567",images:["https://images.unsplash.com/photo-1604654894610-df63bc536371?w=500","https://images.unsplash.com/photo-1632345031435-8727f6897d53?w=500","https://images.unsplash.com/photo-1604654894610-df63bc536371?w=500","https://images.unsplash.com/photo-1610992015732-2449b76344bc?w=500","https://images.unsplash.com/photo-1583209814681-9c1e5a6d2b9d?w=500"],rating:4.9,rates:31},
   ];
   localStorage.setItem('pulse_listings',JSON.stringify(listings));
 }
 let currentCat='All';
 function setCat(c,el){ currentCat=c; document.querySelectorAll('.cats button').forEach(b=>b.classList.remove('active')); el.classList.add('active'); render(); }
 function stars(r){ let s=''; for(let i=1;i<=5;i++) s+= i<=Math.round(r)?'★':'☆'; return s; }
-function handlePhotos(input){
-  let files = Array.from(input.files);
-  if(tempPhotos.length + files.length > 8) return alert("Max 8 photos");
-  files.forEach(f=>{
+
+// --- FIXED: COMPRESS IMAGES SO PHONES DON'T CRASH ---
+document.getElementById('pFiles').addEventListener('change', function(e){
+  let files = Array.from(e.target.files);
+  if(!files.length) return alert("No photos selected - try again");
+  if(tempPhotos.length + files.length > 8){ alert("Max 8 photos"); return; }
+  files.forEach(file=>{
     let reader = new FileReader();
-    reader.onload = e=>{
-      tempPhotos.push(e.target.result);
-      updatePreview();
+    reader.onload = function(ev){
+      let img = new Image();
+      img.onload = function(){
+        // compress to max 800px wide
+        let canvas = document.createElement('canvas');
+        let max = 800;
+        let w = img.width, h = img.height;
+        if(w > max){ h = h * (max/w); w = max; }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        let compressed = canvas.toDataURL('image/jpeg', 0.7);
+        tempPhotos.push(compressed);
+        updatePreview();
+      };
+      img.src = ev.target.result;
     };
-    reader.readAsDataURL(f);
+    reader.readAsDataURL(file);
   });
-}
+  // allow picking same photos again
+  e.target.value = '';
+});
 function updatePreview(){
-  document.getElementById('photoStatus').innerText = tempPhotos.length + " / 5 photos added" + (tempPhotos.length>=5 ? " ✅ Ready!" : " - Need " + (5-tempPhotos.length) + " more");
+  let el = document.getElementById('photoStatus');
+  el.innerText = tempPhotos.length + " / 5 photos added" + (tempPhotos.length>=5 ? " ✅ Ready!" : " - Need " + (5-tempPhotos.length) + " more");
+  el.style.color = tempPhotos.length>=5 ? '#00ff88' : '#fff';
   document.getElementById('preview').innerHTML = tempPhotos.map((p,i)=>`<img src="${p}" onclick="tempPhotos.splice(${i},1);updatePreview()">`).join('') + `<div class="count">${tempPhotos.length}/5</div>`;
-  document.getElementById('photoStatus').style.color = tempPhotos.length>=5 ? '#00ff88' : '#fff';
 }
 function render(){
   let q=document.getElementById('searchInput').value.toLowerCase();
   let filtered=listings.filter(l=>(currentCat==='All'||l.cat===currentCat)&&(l.title.toLowerCase().includes(q)||l.loc.toLowerCase().includes(q)));
-  document.getElement
+  document.getElementById('listingCount').innerText=listings.length;
+  document.getElementById('grid').innerHTML=filtered.map((l,i)=>{
+    let imgs = l.images || [l.img];
+   
