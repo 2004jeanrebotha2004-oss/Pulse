@@ -51,8 +51,7 @@ function loadProfiles(cb){
     if(currentUser && allProfiles[currentUser.username]){ currentUser=allProfiles[currentUser.username]; localStorage.setItem('pulse_user',JSON.stringify(currentUser)); }
     if(cb)cb();
   }).catch(()=>{if(cb)cb();});
-}
-function renderProfile(){
+}function renderProfile(){
   let a=document.getElementById('profileArea');
   if(!currentUser){
     a.innerHTML=`<div class="card"><h3>Create Your Profile</h3>
@@ -66,7 +65,7 @@ function renderProfile(){
   let followers=(currentUser.followers||[]).length;
   let following=(currentUser.following||[]).length;
   a.innerHTML=`<div class="card" style="text-align:center">
-<img class="bigpfp" src="${currentUser.pfp||'https://via.placeholder.com/90'}">
+  <img class="bigpfp" src="${currentUser.pfp||'https://via.placeholder.com/90'}">
   <h2 style="margin:8px 0 2px">@${currentUser.username}</h2>
   <p style="color:#aaa;margin:0">${currentUser.bio||''}</p>
   <p><b id="myPostsCount">0</b> Posts • <b>${followers}</b> Followers • <b>${following}</b> Following • <b id="myLikesCount">0</b> Likes</p>
@@ -90,7 +89,7 @@ function saveProfile(isEdit){
   let username=isEdit?currentUser.username:document.getElementById('newUsername').value.trim().toLowerCase().replace(/\s+/g,'_');
   if(!isEdit && !username){alert('Choose a username');return;}
   function doSave(pfp){
-    let user={username,bio,pfp:pfp||currentUser?.pfp||'',followers:currentUser?.followers||[],following:currentUser?.following||[]};
+    let user={username,bio,pfp:pfp||(currentUser&&currentUser.pfp)||'',followers:(currentUser&&currentUser.followers)||[],following:(currentUser&&currentUser.following)||[]};
     currentUser=user;localStorage.setItem('pulse_user',JSON.stringify(user));
     fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/profiles/${username}.json`,{method:'PUT',body:JSON.stringify(user)}).then(()=>{renderProfile();loadFeed();});
   }
@@ -111,55 +110,14 @@ function loadFeed(){
     renderNextBatch();
   });
 }
-function renderNextBatch(){
-  let feed=document.getElementById('feed');
-  let oldBtn=document.getElementById('loadMoreBtn');
-  if(oldBtn) oldBtn.remove();
-  let myPosts=0; myTotalLikes=0;
-  Object.keys(allFeedData).forEach(id=>{
-    let p=allFeedData[id];
-    if(currentUser && p.author===currentUser.username){ myPosts++; myTotalLikes+=(p.likes||0); }
-  });
-  let likesEl=document.getElementById('myLikesCount'); if(likesEl) likesEl.innerText=myTotalLikes;
-  let postsEl=document.getElementById('myPostsCount'); if(postsEl) postsEl.innerText=myPosts;
-  let batch = allFeedIds.slice(feedShown, feedShown+10);
-  batch.forEach(id=>{
-    let p=allFeedData[id];
-    let author=p.author||'pulse_user';
-    let authorPic=p.authorPic||'https://via.placeholder.com/40';
-    let isMe = currentUser && author===currentUser.username;
-    let meFollowing = currentUser && allProfiles[currentUser.username] ? (allProfiles[currentUser.username].following||[]) : [];
-    let isFollowing = meFollowing.includes(author);
-    let followBtn = !currentUser ? '' : isMe ? '<span style="font-size:12px;color:#888">• You</span>' : `<button onclick="followUser('${author}',this)" style="padding:6px 10px;background:${isFollowing?'#222':'#00ff88'};color:${isFollowing?'#fff':'#000'};font-size:12px">${isFollowing?'✓ Following':'＋ Follow'}</button>`;
-    let deleteBtn = isMe ? `<button onclick="deletePost('${id}')" style="padding:6px 10px;background:#ff0055;color:#fff;font-size:12px;margin-left:auto">🗑️ Delete</button>` : '';
-    let mediaHtml='';
-    if(p.media){
-      if(p.type&&p.type.includes('video')) mediaHtml=`<video src="${p.media}" controls playsinline preload="none" style="width:100%;border-radius:12px;margin-top:8px"></video>`;
-      else mediaHtml=`<img src="${p.media}" loading="lazy" style="width:100%;border-radius:12px;margin-top:8px">`;
-    }
-    feed.innerHTML+=`<div class="card">
-      <div style="display:flex;align-items:center;gap:8px">
-        <img class="pfp" src="${authorPic}" loading="lazy"><b>@${author}</b> ${followBtn} ${deleteBtn}
-      </div>
-      <p>${p.caption||''}</p>
-      ${mediaHtml}
-      <br><br><button onclick="likePost('${id}',${p.likes||0},this)">❤️ ${p.likes||0} Like</button> <button onclick="commentPost('${id}')">💬 Comment</button>
-      <div>${(p.comments||[]).map(c=>`<p>💬 ${c}</p>`).join('')}</div></div>`;
-  });
-  feedShown+=batch.length;
-  if(feedShown < allFeedIds.length){
-    feed.innerHTML+=`<button id="loadMoreBtn" onclick="renderNextBatch()" style="width:100%;background:#222;color:#fff;margin-top:10px">Load More ⬇️</button>`;
-  }
-}
-window.addEventListener('scroll', ()=>{
-  if((window.innerHeight + window.scrollY) >= document.body.scrollHeight - 500){
-    let btn=document.getElementById('loadMoreBtn');
-    if(btn) renderNextBatch();
-  }
-});
-function deletePost(id){
+function renderNextBatchfunction deletePost(id){
   if(!confirm('Delete this post? This cannot be undone.')) return;
-  fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'DELETE'}).then(()=>{ loadFeed(); });
+  let el=document.getElementById('post-'+id);
+  if(el) el.remove();
+  delete allFeedData[id];
+  allFeedIds=allFeedIds.filter(x=>x!==id);
+  if(feedShown>0) feedShown--;
+  fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'DELETE'});
 }
 function followUser(author,btn){
   if(!currentUser){alert('Create a profile first');return;}
@@ -194,38 +152,4 @@ function publishPost(){
   function doUpload(media,type){
     btn.disabled=true;btn.innerText='Publishing... Please Wait ⏳';btn.style.opacity='0.6';
     txt.innerText='Uploading...';bar.style.width='50%';
-    fetch(DB,{method:'POST',body:JSON.stringify({caption,media:media||'',type:type||'',likes:0,comments:[],author:currentUser.username,authorPic:currentUser.pfp||''})}).then(()=>{
-      bar.style.width='100%';txt.innerText='Published 100% ✓';resetBtn();
-      document.getElementById('caption').value='';document.getElementById('fileInput').value='';loadFeed();
-      setTimeout(()=>{bar.style.width='0%';txt.innerText='';},2000);
-    }).catch(()=>{ failVideo('❌ Failed - check internet and try again'); });
-  }
-  if(!file){ doUpload('',''); return; }
-  if(file.type.includes('image')){ compressImage(file,(s)=>doUpload(s,'image/jpeg'),1280,0.88); return; }
-  if(file.type.includes('video')){
-    let url=URL.createObjectURL(file);
-    let v=document.createElement('video');
-    v.preload='metadata'; v.src=url;
-    v.onloadedmetadata=()=>{
-      URL.revokeObjectURL(url);
-      if(v.duration>30){
-        failVideo('❌ Video too long - must be 30 seconds or less. Trim it and try again.');
-        return;
-      }
-      if(file.size>9000000){
-        failVideo('❌ Video file too big. Send it via WhatsApp first to shrink it, then upload that version.');
-        return;
-      }
-      txt.innerText='Uploading video... keep tab open';
-      bar.style.width='10%';
-      let r=new FileReader(); r.onload=e=>doUpload(e.target.result,file.type); r.readAsDataURL(file);
-    };
-    v.onerror=()=>{ failVideo('❌ Could not read video. Try another video.'); };
-    return;
-  }
-  let r=new FileReader(); r.onload=e=>doUpload(e.target.result,file.type); r.readAsDataURL(file);
-}
-loadProfiles(()=>{renderProfile();loadFeed();});
-</script>
-</body>
-</html>
+    fetch(DB,{method:'POST',body:JSON.stringify({caption,media:media||'',type:type||'',likes:0,comments:[],author:currentUser.username,authorPic:currentUser.pfp||''})}).then(r=>r.json()).then(d=>{
