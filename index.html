@@ -11,11 +11,33 @@ img,video{width:100%;border-radius:12px;margin-top:8px}
 button{border:none;border-radius:10px;padding:10px 15px;font-weight:bold;cursor:pointer}
 input,textarea{width:100%;padding:12px;border-radius:10px;border:none;margin-top:8px;box-sizing:border-box}
 #publishBtn{width:100%;padding:15px;background:#ff0055;color:#fff;font-size:17px;margin-top:10px}
+.pfp{width:40px;height:40px;border-radius:50%;object-fit:cover;margin:0;vertical-align:middle}
+.bigpfp{width:70px;height:70px;border-radius:50%;object-fit:cover;margin:0}
+.profileBox{background:#111;border-radius:15px;padding:12px;display:flex;gap:12px;align-items:center;margin-top:10px}
+.stat{text-align:center;flex:1}
+.stat b{font-size:17px;display:block}
+.stat span{font-size:11px;color:#aaa}
+#setupBox{background:#111;border-radius:15px;padding:15px;margin-top:10px;text-align:center}
 </style>
 </head>
 <body>
 <div id="bar"></div>
 <h1 style="text-align:center">⚡ PULSE</h1>
+
+<!-- PROFILE HEADER -->
+<div id="profileHeader"></div>
+
+<!-- SETUP - shows only if no profile -->
+<div id="setupBox" style="display:none">
+<h3>Create Your Profile 👋</h3>
+<input id="newUsername" placeholder="Choose username e.g. thabo_sa">
+<input id="newBio" placeholder="Bio e.g. From Potch 🔥">
+<p style="font-size:12px;color:#aaa">Profile Picture:</p>
+<input type="file" id="newPfp" accept="image/*">
+<button onclick="saveProfile()" style="width:100%;background:#00ff88;color:#000;margin-top:10px;padding:14px">Create Profile ✅</button>
+</div>
+
+<div id="mainApp">
 <p style="text-align:center;color:#aaa">Everyone Worldwide Will See It</p>
 <input type="file" id="fileInput" accept="image/*,video/*">
 <textarea id="caption" placeholder="Write caption..."></textarea>
@@ -24,16 +46,136 @@ input,textarea{width:100%;padding:12px;border-radius:10px;border:none;margin-top
 <p style="text-align:center;color:#888;font-size:12px">Videos up to 30 seconds with sound</p>
 <button onclick="loadFeed()" style="width:100%;background:#222;color:#fff;margin-top:5px">🔄 Refresh Feed</button>
 <div id="feed"></div>
+</div>
+
 <script>
 const DB = "https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses.json";
-function loadFeed(){fetch(DB).then(r=>r.json()).then(data=>{let feed=document.getElementById('feed');feed.innerHTML='';if(!data)return;Object.keys(data).reverse().forEach(id=>{let p=data[id];feed.innerHTML+=`<div class="card"><b>@pulse_user</b><p>${p.caption||''}</p>${p.media?(p.type&&p.type.includes('video')?`<video src="${p.media}" controls playsinline preload="none"></video>`:`<img src="${p.media}">`):''}<br><br><button onclick="likePost('${id}',${p.likes||0},this)">❤️ ${p.likes||0} Like</button> <button onclick="commentPost('${id}')">💬 Comment</button><div>${(p.comments||[]).map(c=>`<p>💬 ${c}</p>`).join('')}</div></div>`;});});}
-loadFeed();
-function likePost(id,likes,btn){btn.innerText='❤️ '+(likes+1)+' Like';fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PATCH',body:JSON.stringify({likes:likes+1})});}
-function commentPost(id){let t=prompt("Write comment:");if(!t)return;let el=document.createElement('p');el.innerText='💬 '+t;event.target.parentElement.appendChild(el);fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`).then(r=>r.json()).then(p=>{let c=p.comments||[];c.push(t);fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PATCH',body:JSON.stringify({comments:c})});});}
+const PROFILES = "https://pulse-v2-707c2-default-rtdb.firebaseio.com/profiles.json";
+let currentUser = JSON.parse(localStorage.getItem('pulse_user')||'null');
+let allProfiles = {};
+let myTotalLikes = 0;
+
+function showSetup(){
+  document.getElementById('setupBox').style.display='block';
+  document.getElementById('mainApp').style.display='none';
+  document.getElementById('profileHeader').innerHTML='';
+}
+function loadProfiles(cb){
+  fetch(PROFILES).then(r=>r.json()).then(d=>{ allProfiles=d||{}; if(cb)cb(); });
+}
+function renderProfile(){
+  if(!currentUser){ showSetup(); return; }
+  document.getElementById('setupBox').style.display='none';
+  document.getElementById('mainApp').style.display='block';
+  let me = allProfiles[currentUser.username] || currentUser;
+  let followers = me.followers||[];
+  let following = me.following||[];
+  document.getElementById('profileHeader').innerHTML = `
+  <div class="profileBox">
+    <img class="bigpfp" src="${me.pfp||'https://via.placeholder.com/70'}">
+    <div style="flex:1">
+      <b>@${me.username}</b><br><span style="font-size:12px;color:#aaa">${me.bio||''}</span>
+      <div style="display:flex;margin-top:8px">
+        <div class="stat" onclick="showFollowers()"><b>${followers.length}</b><span>Followers</span></div>
+        <div class="stat" onclick="showFollowing()"><b>${following.length}</b><span>Following</span></div>
+        <div class="stat"><b id="myLikesCount">${myTotalLikes}</b><span>Likes</span></div>
+        <div class="stat"><b id="myPostsCount">0</b><span>Posts</span></div>
+      </div>
+    </div>
+    <button onclick="editProfile()" style="background:#222;color:#fff;padding:8px">Edit</button>
+  </div>`;
+}
+function showFollowers(){
+  let me = allProfiles[currentUser.username]||currentUser;
+  let list = (me.followers||[]).join('\n@')||'No followers yet';
+  alert('Your Followers:\n@'+list);
+}
+function showFollowing(){
+  let me = allProfiles[currentUser.username]||currentUser;
+  let list = (me.following||[]).join('\n@')||'Not following anyone yet';
+  alert('You Follow:\n@'+list);
+}
+function editProfile(){
+  if(confirm('Change profile picture / username?')){
+    localStorage.removeItem('pulse_user');
+    location.reload();
+  }
+}
 function compressImage(file, cb){
   let r=new FileReader();
-  r.onload=e=>{let img=new Image();img.onload=()=>{let canvas=document.createElement('canvas');let max=800;let w=img.width,h=img.height;if(w>max){h=h*max/w;w=max;}if(h>max){w=w*max/h;h=max;}canvas.width=w;canvas.height=h;canvas.getContext('2d').drawImage(img,0,0,w,h);cb(canvas.toDataURL('image/jpeg',0.7));};img.src=e.target.result;};r.readAsDataURL(file);
+  r.onload=e=>{let img=new Image();img.onload=()=>{let canvas=document.createElement('canvas');let max=300;let w=img.width,h=img.height;if(w>max){h=h*max/w;w=max;}if(h>max){w=w*max/h;h=max;}canvas.width=w;canvas.height=h;canvas.getContext('2d').drawImage(img,0,0,w,h);cb(canvas.toDataURL('image/jpeg',0.7));};img.src=e.target.result;};r.readAsDataURL(file);
 }
+function saveProfile(){
+  let username=document.getElementById('newUsername').value.trim().replace('@','').replace(/\s/g,'_').toLowerCase();
+  let bio=document.getElementById('newBio').value;
+  let file=document.getElementById('newPfp').files[0];
+  if(!username){alert('Choose a username');return;}
+  if(username.length<3){alert('Username too short');return;}
+  function finish(pfp){
+    let user={username,bio,pfp:pfp||'',followers:[],following:[]};
+    // save to Firebase
+    fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/profiles/${username}.json`,{method:'PUT',body:JSON.stringify(user)}).then(()=>{
+      localStorage.setItem('pulse_user',JSON.stringify(user));
+      currentUser=user;
+      loadProfiles(()=>{renderProfile();loadFeed();});
+    });
+  }
+  if(file){ compressImage(file,finish); } else { finish(''); }
+}
+
+function loadFeed(){
+  fetch(DB).then(r=>r.json()).then(data=>{
+    let feed=document.getElementById('feed');feed.innerHTML='';
+    if(!data)return;
+    let myPosts=0; myTotalLikes=0;
+    Object.keys(data).reverse().forEach(id=>{
+      let p=data[id];
+      let author=p.author||'pulse_user';
+      let authorPic=p.authorPic||'https://via.placeholder.com/40';
+      let isMe = currentUser && author===currentUser.username;
+      if(isMe){ myPosts++; myTotalLikes+= (p.likes||0); }
+      let meFollowing = currentUser && allProfiles[currentUser.username] ? (allProfiles[currentUser.username].following||[]) : [];
+      let isFollowing = meFollowing.includes(author);
+      let followBtn = !currentUser ? '' : isMe ? '<span style="font-size:12px;color:#888">• You</span>' : `<button onclick="followUser('${author}',this)" style="padding:6px 10px;background:${isFollowing?'#222':'#00ff88'};color:${isFollowing?'#fff':'#000'};font-size:12px">${isFollowing?'✓ Following':'＋ Follow'}</button>`;
+      feed.innerHTML+=`<div class="card">
+        <div style="display:flex;align-items:center;gap:8px">
+          <img class="pfp" src="${authorPic}"><b>@${author}</b> ${followBtn}
+        </div>
+        <p>${p.caption||''}</p>
+        ${p.media?(p.type&&p.type.includes('video')?`<video src="${p.media}" controls playsinline preload="none"></video>`:`<img src="${p.media}">`):''}
+        <br><br><button onclick="likePost('${id}',${p.likes||0},this)">❤️ ${p.likes||0} Like</button> <button onclick="commentPost('${id}')">💬 Comment</button>
+        <div>${(p.comments||[]).map(c=>`<p>💬 ${c}</p>`).join('')}</div></div>`;
+    });
+    // update my stats
+    let likesEl=document.getElementById('myLikesCount'); if(likesEl) likesEl.innerText=myTotalLikes;
+    let postsEl=document.getElementById('myPostsCount'); if(postsEl) postsEl.innerText=myPosts;
+  });
+}
+function followUser(author,btn){
+  if(!currentUser){alert('Create a profile first');return;}
+  if(author===currentUser.username) return;
+  loadProfiles(()=>{
+    let me = allProfiles[currentUser.username]||currentUser;
+    let them = allProfiles[author]||{username:author,followers:[],following:[]};
+    me.following = me.following||[]; them.followers = them.followers||[];
+    let isFollowing = me.following.includes(author);
+    if(isFollowing){
+      me.following = me.following.filter(u=>u!==author);
+      them.followers = them.followers.filter(u=>u!==currentUser.username);
+      btn.innerText='＋ Follow'; btn.style.background='#00ff88'; btn.style.color='#000';
+    } else {
+      me.following.push(author); them.followers.push(currentUser.username);
+      btn.innerText='✓ Following'; btn.style.background='#222'; btn.style.color='#fff';
+    }
+    localStorage.setItem('pulse_user',JSON.stringify(me));
+    allProfiles[currentUser.username]=me; allProfiles[author]=them;
+    fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/profiles/${currentUser.username}.json`,{method:'PUT',body:JSON.stringify(me)});
+    fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/profiles/${author}.json`,{method:'PUT',body:JSON.stringify(them)}).then(()=>renderProfile());
+  });
+}
+function likePost(id,likes,btn){btn.innerText='❤️ '+(likes+1)+' Like';fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PATCH',body:JSON.stringify({likes:likes+1})});}
+function commentPost(id){let t=prompt("Write comment:");if(!t)return;let el=document.createElement('p');el.innerText='💬 '+t;event.target.parentElement.appendChild(el);fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`).then(r=>r.json()).then(p=>{let c=p.comments||[];c.push(t);fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PATCH',body:JSON.stringify({comments:c})});});}
+
 function compressVideo(file, cb, onFail){
   if(file.size < 3500000){
     let r=new FileReader(); r.onload=e=>cb(e.target.result); r.readAsDataURL(file); return;
@@ -68,12 +210,13 @@ function compressVideo(file, cb, onFail){
   video.onerror=()=>{ video.remove(); onFail(); };
 }
 function publishPost(){
+  if(!currentUser){alert('Create your profile first!');return;}
   let btn=document.getElementById('publishBtn');let bar=document.getElementById('bar');let txt=document.getElementById('publishText');
   let caption=document.getElementById('caption').value;let file=document.getElementById('fileInput').files[0];
   btn.disabled=true;btn.innerText='Publishing... Please Wait ⏳';btn.style.opacity='0.6';
   txt.innerText='Uploading 10%...';bar.style.width='10%';
   let p=10;let timer=setInterval(()=>{p+=8;if(p>=90){p=90;clearInterval(timer);txt.innerText='Almost done 90%...';}else{txt.innerText='Uploading '+p+'%...';}bar.style.width=p+'%';},500);
-  function finish(media,type){fetch(DB,{method:'POST',body:JSON.stringify({caption,media:media||'',type:type||'',likes:0,comments:[]})}).then(()=>{clearInterval(timer);bar.style.width='100%';txt.innerText='Published 100% ✓';btn.innerText='Publish Globally 🚀';btn.disabled=false;btn.style.opacity='1';document.getElementById('caption').value='';document.getElementById('fileInput').value='';loadFeed();setTimeout(()=>{bar.style.width='0%';txt.innerText='';},2000);}).catch(()=>{clearInterval(timer);txt.innerText='Failed - try shorter video';btn.disabled=false;btn.innerText='Publish Globally 🚀';});}
+  function finish(media,type){fetch(DB,{method:'POST',body:JSON.stringify({caption,media:media||'',type:type||'',likes:0,comments:[],author:currentUser.username,authorPic:currentUser.pfp||''})}).then(()=>{clearInterval(timer);bar.style.width='100%';txt.innerText='Published 100% ✓';btn.innerText='Publish Globally 🚀';btn.disabled=false;btn.style.opacity='1';document.getElementById('caption').value='';document.getElementById('fileInput').value='';loadFeed();setTimeout(()=>{bar.style.width='0%';txt.innerText='';},2000);}).catch(()=>{clearInterval(timer);txt.innerText='Failed - try shorter video';btn.disabled=false;btn.innerText='Publish Globally 🚀';});}
   function failVideo(){clearInterval(timer);bar.style.width='0%';txt.innerText='❌ Video still too big. Try 25 seconds or less, or trim in Gallery.';btn.disabled=false;btn.innerText='Publish Globally 🚀';btn.style.opacity='1';}
   if(file){
     if(file.type.includes('image')){compressImage(file,(s)=>finish(s,'image/jpeg'));}
@@ -81,6 +224,9 @@ function publishPost(){
     else{let r=new FileReader();r.onload=e=>finish(e.target.result,file.type);r.readAsDataURL(file);}
   } else {finish('','');}
 }
+
+// START
+loadProfiles(()=>{renderProfile();loadFeed();});
 </script>
 </body>
 </html>
