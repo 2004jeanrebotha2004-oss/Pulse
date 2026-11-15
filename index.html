@@ -66,7 +66,37 @@ function renderProfile(){
   let followers=(currentUser.followers||[]).length;
   let following=(currentUser.following||[]).length;
   a.innerHTML=`<div class="card" style="text-align:center">
-  <img class="bigpfp"let allFeedIds=[];
+<img class="bigpfp" src="${currentUser.pfp||'https://via.placeholder.com/90'}">
+  <h2 style="margin:8px 0 2px">@${currentUser.username}</h2>
+  <p style="color:#aaa;margin:0">${currentUser.bio||''}</p>
+  <p><b id="myPostsCount">0</b> Posts • <b>${followers}</b> Followers • <b>${following}</b> Following • <b id="myLikesCount">0</b> Likes</p>
+  <button onclick="editProfile()" style="background:#222;color:#fff">Edit Profile ✏️</button>
+  <button onclick="logout()" style="background:#ff0055;color:#fff">Log Out</button>
+  </div>`;
+}
+function editProfile(){
+  let a=document.getElementById('profileArea');
+  a.innerHTML=`<div class="card"><h3>Edit Profile</h3>
+  <input id="newBio" placeholder="Your bio..." value="${currentUser.bio||''}">
+  <p style="font-size:13px;color:#aaa">Change photo (optional):</p>
+  <input type="file" id="newPfp" accept="image/*">
+  <button onclick="saveProfile(true)" style="width:100%">Save Changes ✅</button>
+  <button onclick="renderProfile()" style="width:100%;background:#222;color:#fff;margin-top:6px">Cancel</button></div>`;
+}
+function logout(){localStorage.removeItem('pulse_user');currentUser=null;renderProfile();loadFeed();}
+function saveProfile(isEdit){
+  let bio=document.getElementById('newBio').value;
+  let file=document.getElementById('newPfp').files[0];
+  let username=isEdit?currentUser.username:document.getElementById('newUsername').value.trim().toLowerCase().replace(/\s+/g,'_');
+  if(!isEdit && !username){alert('Choose a username');return;}
+  function doSave(pfp){
+    let user={username,bio,pfp:pfp||currentUser?.pfp||'',followers:currentUser?.followers||[],following:currentUser?.following||[]};
+    currentUser=user;localStorage.setItem('pulse_user',JSON.stringify(user));
+    fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/profiles/${username}.json`,{method:'PUT',body:JSON.stringify(user)}).then(()=>{renderProfile();loadFeed();});
+  }
+  if(file){compressImage(file,(s)=>doSave(s),600,0.85);} else {doSave('');}
+}
+let allFeedIds=[];
 let allFeedData={};
 let feedShown=0;
 function loadFeed(){
