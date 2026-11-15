@@ -29,19 +29,15 @@ img,video{max-width:100%;border-radius:12px}
 </head>
 <body>
 <h1>⚡ PULSE</h1>
-
-<!-- HOME / FYP / DISCOVER / PROFILE VIEWS -->
 <div id="view-home">
   <p style="text-align:center;color:#aaa;font-size:13px">🏠 <b>Home</b> = Only people you follow</p>
   <div id="homeFeed"></div>
 </div>
-
 <div id="view-fyp" style="display:none">
   <p style="text-align:center;color:#aaa;font-size:13px">🔥 <b>FYP - For You Page</b> = Best posts from everyone, most liked first</p>
   <div id="catPillsFYP"></div>
   <div id="fypFeed"></div>
 </div>
-
 <div id="view-discover" style="display:none">
   <p style="text-align:center;color:#aaa;font-size:13px">🔍 <b>Discover</b> = Search people, trending & categories</p>
   <div class="card">
@@ -51,7 +47,6 @@ img,video{max-width:100%;border-radius:12px}
   <div class="card"><h3 style="margin:0 0 6px">🔥 Trending Today</h3><div id="trendingBox"><p class="small">Loading...</p></div></div>
   <div class="card"><h3 style="margin:0 0 6px">Browse Categories</h3><div id="catPillsDiscover"></div><div id="discoverFeed"></div></div>
 </div>
-
 <div id="view-post" style="display:none">
   <div class="card">
     <h3 style="margin-top:0">Create Post ➕</h3>
@@ -83,14 +78,11 @@ img,video{max-width:100%;border-radius:12px}
     <p id="publishText" style="text-align:center;font-size:13px;color:#aaa"></p>
   </div>
 </div>
-
 <div id="view-profile" style="display:none">
   <div id="profileArea"></div>
   <div id="myPostsFeed"></div>
 </div>
-
 <button onclick="loadFeed()" style="width:100%;background:#222;color:#fff">🔄 Refresh Feed</button>
-
 <div class="bottomNav">
   <button class="navBtn active" id="nav-home" onclick="switchTab('home')"><b>🏠</b>Home</button>
   <button class="navBtn" id="nav-fyp" onclick="switchTab('fyp')"><b>🔥</b>FYP</button>
@@ -98,7 +90,6 @@ img,video{max-width:100%;border-radius:12px}
   <button class="navBtn" id="nav-discover" onclick="switchTab('discover')"><b>🔍</b>Discover</button>
   <button class="navBtn" id="nav-profile" onclick="switchTab('profile')"><b>👤</b>Profile</button>
 </div>
-
 <script>
 const DB='https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses.json';
 let currentUser=JSON.parse(localStorage.getItem('pulse_user')||'null');
@@ -110,7 +101,6 @@ let currentCatDiscover='All';
 let selectedMusic=null;
 const CATS=['All','Funny','Music','Sports','Gaming','Dance','Food','News','Beauty','Cars','School','Other'];
 const CAT_EMOJI={Funny:'😂',Music:'🎵',Sports:'⚽',Gaming:'🎮',Dance:'💃',Food:'🍔',News:'📰',Beauty:'💄',Cars:'🚗',School:'🎓',Other:'✨'};
-
 function switchTab(tab){
   ['home','fyp','post','discover','profile'].forEach(t=>{
     document.getElementById('view-'+t).style.display = (t===tab?'block':'none');
@@ -120,23 +110,33 @@ function switchTab(tab){
   window.scrollTo(0,0);
 }
 function compressImage(file,cb,maxW,quality){
-  let r=new FileReader();
-  r.onload=e=>{
-    let img=new Image();
-    img.onload=()=>{
-      try{
-        let scale=Math.min(1,maxW/img.width);
-        let w=Math.round(img.width*scale), h=Math.round(img.height*scale);
-        let c=document.createElement('canvas'); c.width=w; c.height=h;
-        c.getContext('2d').drawImage(img,0,0,w,h);
-        cb(c.toDataURL('image/jpeg',quality));
-      }catch(err){ cb(e.target.result); }
-    };
-    img.onerror=()=>{ cb(e.target.result); };
-    img.src=e.target.result;
+  let url = URL.createObjectURL(file);
+  let img = new Image();
+  img.onload = ()=>{
+    try{
+      let scale = Math.min(1, maxW/img.width);
+      let w = Math.round(img.width*scale);
+      let h = Math.round(img.height*scale);
+      let c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);
+      cb(c.toDataURL('image/jpeg', quality));
+    }catch(e){
+      URL.revokeObjectURL(url);
+      let r2 = new FileReader();
+      r2.onload = (ev)=>cb(ev.target.result);
+      r2.readAsDataURL(file);
+    }
   };
-  r.onerror=()=>{ alert('Could not read photo'); document.getElementById('publishBtn').disabled=false; };
-  r.readAsDataURL(file);
+  img.onerror = ()=>{
+    URL.revokeObjectURL(url);
+    let r2 = new FileReader();
+    r2.onload = (ev)=>cb(ev.target.result);
+    r2.onerror = ()=>{ alert('This photo format is not supported. Try taking a screenshot of the photo and uploading that.'); document.getElementById('publishBtn').disabled=false; document.getElementById('publishText').innerText=''; document.getElementById('bar').style.width='0%'; };
+    r2.readAsDataURL(file);
+  };
+  img.src = url;
 }
 function loadProfiles(cb){
   fetch('https://pulse-v2-707c2-default-rtdb.firebaseio.com/profiles.json').then(r=>r.json()).then(d=>{
@@ -188,7 +188,6 @@ function saveProfile(isEdit){
   }
   if(file){compressImage(file,(s)=>doSave(s),600,0.5);} else {doSave('');}
 }
-// MUSIC SEARCH - Free iTunes Preview
 async function searchMusic(){
   let q=document.getElementById('musicSearch').value.trim();
   if(!q) return alert('Type a song name first');
@@ -255,22 +254,17 @@ function loadFeed(){
 function renderFeeds(){
   renderCatPills();
   let posts=allFeedIds.map(id=>({id, ...allFeedData[id]}));
-  // HOME - only following
   let following=currentUser ? (allProfiles[currentUser.username]?.following||[]) : [];
   let homePosts=posts.filter(p=> currentUser && (following.includes(p.author) || p.author===currentUser.username));
   document.getElementById('homeFeed').innerHTML = !currentUser ? '<div class="card"><p>Create a profile to see Home. Go to Profile 👤</p></div>' : homePosts.length? homePosts.map(p=>postCard(p.id,p)).join('') : '<div class="card"><p>🏠 Home is empty.<br>You are not following anyone yet.<br>Go to <b>FYP 🔥</b> to find people to follow!</p><button onclick="switchTab(\'fyp\')" style="width:100%">Go to FYP 🔥</button></div>';
-  // FYP - most liked first + category filter
   let fypPosts=[...posts].sort((a,b)=>(b.likes||0)-(a.likes||0));
   if(currentCatFYP!=='All') fypPosts=fypPosts.filter(p=>(p.category||'Other')===currentCatFYP);
   document.getElementById('fypFeed').innerHTML = fypPosts.length? fypPosts.map(p=>postCard(p.id,p)).join('') : '<p style="text-align:center;color:#aaa">No posts in this category yet - be first!</p>';
-  // DISCOVER
   let discPosts=posts;
   if(currentCatDiscover!=='All') discPosts=discPosts.filter(p=>(p.category||'Other')===currentCatDiscover);
   document.getElementById('discoverFeed').innerHTML = discPosts.slice(0,10).map(p=>postCard(p.id,p)).join('') || '<p class="small">No posts here yet.</p>';
-  // TRENDING - top 3 liked
   let trending=[...posts].sort((a,b)=>(b.likes||0)-(a.likes||0)).slice(0,3);
   document.getElementById('trendingBox').innerHTML = trending.length? trending.map((p,i)=>`<p><b>${i+1}.</b> @${p.author} - ${p.caption||''} <span style="color:#ff0055">❤️ ${p.likes||0}</span></p>`).join('') : '<p class="small">No trending yet.</p>';
-  // PROFILE COUNTS + MY POSTS
   let myPosts=0, myLikes=0;
   Object.keys(allFeedData).forEach(id=>{ let p=allFeedData[id]; if(currentUser && p.author===currentUser.username){ myPosts++; myLikes+=(p.likes||0); } });
   let le=document.getElementById('myLikesCount'); if(le) le.innerText=myLikes;
