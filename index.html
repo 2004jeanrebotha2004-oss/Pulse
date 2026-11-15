@@ -110,7 +110,46 @@ function loadFeed(){
     renderNextBatch();
   });
 }
-function renderNextBatchfunction deletePost(id){
+function renderNextBatch(){
+  let feed=document.getElementById('feed');
+  let oldBtn=document.getElementById('loadMoreBtn');
+  if(oldBtn) oldBtn.remove();
+  let myPosts=0; myTotalLikes=0;
+  Object.keys(allFeedData).forEach(id=>{
+    let p=allFeedData[id];
+    if(currentUser && p.author===currentUser.username){ myPosts++; myTotalLikes+=(p.likes||0); }
+  });
+  let likesEl=document.getElementById('myLikesCount'); if(likesEl) likesEl.innerText=myTotalLikes;
+  let postsEl=document.getElementById('myPostsCount'); if(postsEl) postsEl.innerText=myPosts;
+  let batch = allFeedIds.slice(feedShown, feedShown+10);
+  batch.forEach(id=>{
+    let p=allFeedData[id];
+    let author=p.author||'pulse_user';
+    let authorPic=p.authorPic||'https://via.placeholder.com/40';
+    let isMe = currentUser && author===currentUser.username;
+    let meFollowing = currentUser && allProfiles[currentUser.username] ? (allProfiles[currentUser.username].following||[]) : [];
+    let isFollowing = meFollowing.includes(author);
+    let followBtn = !currentUser ? '' : isMe ? '<span style="font-size:12px;color:#888">• You</span>' : `<button onclick="followUser('${author}',this)" style="padding:6px 10px;background:${isFollowing?'#222':'#00ff88'};color:${isFollowing?'#000':'#000'};font-size:12px">${isFollowing?'✓ Following':'＋ Follow'}</button>`;
+    let deleteBtn = isMe ? `<button onclick="deletePost('${id}')" style="padding:6px 10px;background:#ff0055;color:#fff;font-size:12px;margin-left:auto">🗑️ Delete</button>` : '';
+    let mediaHtml='';
+    if(p.media){
+      if(p.type&&p.type.includes('video')) mediaHtml=`<video src="${p.media}" controls playsinline preload="none" style="width:100%;border-radius:12px;margin-top:8px"></video>`;
+      else mediaHtml=`<img src="${p.media}" loading="lazy" style="width:100%;border-radius:12px;margin-top:8px">`;
+    }
+    feed.innerHTML+=`<div class="card" id="post-${id}"><div style="display:flex;align-items:center;gap:8px"><img class="pfp" src="${authorPic}" loading="lazy"><b>@${author}</b> ${followBtn} ${deleteBtn}</div><p>${p.caption||''}</p>${mediaHtml}<br><br><button onclick="likePost('${id}',${p.likes||0},this)">❤️ ${p.likes||0} Like</button> <button onclick="commentPost('${id}')">💬 Comment</button><div>${(p.comments||[]).map(c=>`<p>💬 ${c}</p>`).join('')}</div></div>`;
+  });
+  feedShown+=batch.length;
+  if(feedShown < allFeedIds.length){
+    feed.innerHTML+=`<button id="loadMoreBtn" onclick="renderNextBatch()" style="width:100%;background:#222;color:#fff;margin-top:10px">Load More ⬇️</button>`;
+  }
+}
+window.addEventListener('scroll', ()=>{
+  if((window.innerHeight + window.scrollY) >= document.body.scrollHeight - 500){
+    let btn=document.getElementById('loadMoreBtn');
+    if(btn) renderNextBatch();
+  }
+});
+function deletePost(id){
   if(!confirm('Delete this post? This cannot be undone.')) return;
   let el=document.getElementById('post-'+id);
   if(el) el.remove();
@@ -142,14 +181,65 @@ function followUser(author,btn){
   });
 }
 function likePost(id,likes,btn){btn.innerText='❤️ '+(likes+1)+' Like';fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PATCH',body:JSON.stringify({likes:likes+1})});}
-function commentPost(id){let t=prompt("Write comment:");if(!t)return;let el=document.createElement('p');el.innerText='💬 '+t;event.target.parentElement.appendChild(el);fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`).then(r=>r.json()).then(p=>{let c=p.comments||[];c.push(t);fetch(`https://pulse-v2-707c2-default-rtdb.firebaseio.com/pulses/${id}.json`,{method:'PATCH',body:JSON.stringify({comments:c})});});}
+function commentPost(id){
+  let comment=prompt('Write a comment:');
+  if(!comment) return;
+  let p=allFeedData[id];
+  if(!p.comments) p.comments=[];
+  p.comments.push((currentUser?currentUser.username:'guest')+': '+comment);
+  fetch(DB,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':'$2a$10$DUMMY'},body:JSON.stringify(p)}).catch(()=>{});
+  // save full feed back
+  fetch(DB,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':'$2a$10$DUMMY'},body:JSON.stringify(allFeedData)}).then(()=>loadFeed());
+  let el=document.getElementById('post-'+id);
+  if(el) el.querySelector('div:last-child').innerHTML += `<p>💬 ${comment}</p>`;
+}
+function followUser(username,btn){
+  if(!currentUser) return alert('Create profile first');
+  if(!allProfiles[currentUser.username]) allProfiles[currentUser.username]={following:[]};
+  let list=allProfiles[currentUser.username].following||[];
+  if(list.includes(username)){
+    allProfiles[currentUser.username].following=list.filter(u=>u!==username);
+    btn.innerText='＋ Follow'; btn.style.background='#00ff88'; btn.style.color='#000';
+  } else {
+    list.push(username);
+    allProfiles[currentUser.username].following=list;
+    btn.innerText='✓ Following'; btn.style.background='#222'; btn.style.color='#fff';
+  }
+  localStorage.setItem('pulse_profiles',JSON.stringify(allProfiles));
+}
+function likePost(id,likes,btn){
+  let p=allFeedData[id];
+  p.likes=(p.likes||0)+1;
+  btn.innerText='❤️ '+p.likes+' Like';
+  fetch(DB,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':'$2a$10$DUMMY'},body:JSON.stringify(allFeedData)}).catch(()=>{});
+}
 function publishPost(){
-  if(!currentUser){alert('Create your profile first!');return;}
-  let btn=document.getElementById('publishBtn');let bar=document.getElementById('bar');let txt=document.getElementById('publishText');
-  let caption=document.getElementById('caption').value;let file=document.getElementById('fileInput').files[0];
-  function resetBtn(){btn.disabled=false;btn.innerText='Publish Globally 🚀';btn.style.opacity='1';}
-  function failVideo(msg){bar.style.width='0%';txt.innerText=msg;resetBtn();}
-  function doUpload(media,type){
-    btn.disabled=true;btn.innerText='Publishing... Please Wait ⏳';btn.style.opacity='0.6';
-    txt.innerText='Uploading...';bar.style.width='50%';
-    fetch(DB,{method:'POST',body:JSON.stringify({caption,media:media||'',type:type||'',likes:0,comments:[],author:currentUser.username,authorPic:currentUser.pfp||''})}).then(r=>r.json()).then(d=>{
+  let caption=document.getElementById('caption').value.trim();
+  let file=document.getElementById('fileInput').files[0];
+  if(!currentUser) return alert('Create profile first');
+  if(!caption && !file) return alert('Write something or pick a photo/video');
+  document.getElementById('publishText').innerText='Publishing...';
+  let done=(media,type)=>{
+    let id='post_'+Date.now();
+    allFeedData[id]={author:currentUser.username,authorPic:currentUser.pfp||'https://via.placeholder.com/40',caption:caption,media:media||'',type:type||'',likes:0,comments:[],time:Date.now()};
+    allFeedIds.unshift(id);
+    fetch(DB,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':'$2a$10$DUMMY'},body:JSON.stringify(allFeedData)}).then(()=>{
+      document.getElementById('caption').value='';
+      document.getElementById('fileInput').value='';
+      document.getElementById('publishText').innerText='Published ✅';
+      loadFeed();
+    });
+  };
+  if(file){
+    let r=new FileReader();
+    r.onload=()=>{ done(r.result, file.type); };
+    r.readAsDataURL(file);
+  } else done('','');
+}
+// START
+let savedUser=localStorage.getItem('pulse_user');
+if(savedUser){ try{ currentUser=JSON.parse(savedUser); }catch(e){} }
+loadProfiles(()=>{ renderProfile(); loadFeed(); });
+</script>
+</body>
+</html>
