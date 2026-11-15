@@ -29,11 +29,13 @@ body{background:#0a0a0a;color:#fff;padding-bottom:80px}
 .thumbs{display:flex;gap:4px;margin-top:6px}.thumbs img{width:32px;height:32px;object-fit:cover;border-radius:5px}
 .card button{width:100%;margin-top:8px;padding:9px;border-radius:8px;border:none;background:#ff2d55;color:#fff;font-weight:bold}
 .card .safe-btn{background:#222;border:1px solid #00ff88;color:#00ff88}
+.empty{text-align:center;padding:40px 20px;color:#888}
+.empty h2{color:#fff;font-size:22px;margin-bottom:10px}
 </style>
 </head>
 <body>
 <div class="top"><h1>⚡ PULSE</h1><p>Buy & Sell In Your Town</p></div>
-<div class="livebar"><span>👁️ <b id="visits">...</b> Visits</span><span>🟢 <b id="online">3</b> Online Now</span><span>📦 <b id="listingCount">0</b> Listings</span></div>
+<div class="livebar"><span>👁️ <b id="visits">...</b> Visits</span><span>📦 <b id="listingCount">0</b> Live Listings</span></div>
 <div class="search"><input id="searchInput" placeholder="🔍 Search cars, electronics..." oninput="render()"></div>
 <div class="cats">
 <button class="active" onclick="setCat('All',this)">All</button>
@@ -54,47 +56,36 @@ body{background:#0a0a0a;color:#fff;padding-bottom:80px}
 <input id="pLoc" placeholder="Location e.g. Viljoenskroon">
 <input id="pPhone" placeholder="WhatsApp e.g. 0821234567">
 <select id="pCat"><option>Food</option><option>Nails</option><option>Sneakers</option><option>Phones</option><option>Electronics</option><option>Cars</option><option>Clothes</option><option>Hair</option></select>
-
 <div class="upload-area">
-<p><b>📸 PHOTOS - MINIMUM 5</b><br><span id="photoStatus">0 / 5 photos added</span></p>
-<br>
-<!-- VISIBLE BUTTON - THIS IS THE FIX -->
+<p><b>📸 PHOTOS - MINIMUM 5</b><br><span id="photoStatus">0 / 5 photos added</span></p><br>
 <input type="file" id="pFiles" accept="image/*" multiple style="width:100%;padding:10px;background:#ff2d55;color:#fff;border-radius:10px;font-weight:bold">
-<p style="font-size:11px;color:#aaa;margin-top:8px">Tap the pink button above → Choose Gallery → Select 5 photos<br>Tap a preview to remove it</p>
+<p style="font-size:11px;color:#aaa;margin-top:8px">Tap pink button → Gallery → Select 5 photos</p>
 </div>
 <div class="preview" id="preview"></div>
-
-<!-- BACKUP IF GALLERY STILL FAILS -->
-<p style="font-size:12px;color:#aaa;text-align:center;margin:8px 0">OR paste 5 image links (backup):</p>
-<input id="pLink" placeholder="Paste image link here + tap Add Link">
+<p style="font-size:12px;color:#aaa;text-align:center;margin:8px 0">OR paste image links:</p>
+<input id="pLink" placeholder="Paste image link + tap Add Link">
 <button style="background:#222;border:1px solid #555;margin-bottom:8px" onclick="addLink()">+ ADD LINK PHOTO</button>
-
 <button onclick="addListing()">POST NOW →</button>
-<button onclick="testUpload()" style="background:#222;margin-top:8px">🔧 TEST: Does Upload Work?</button>
 </div>
 
 <div class="safety"><b>🛡️ SAFE TRADE:</b> Meet in public, never send money first. For CARS: Check papers + test drive.</div>
 <div class="grid" id="grid"></div>
+<div style="text-align:center;padding:20px;color:#777;font-size:12px">PULSE • Made in Viljoenskroon 🇿🇦 • Global</div>
 
 <script>
+// CLEAN START - NO DEMO LISTINGS
 let listings = JSON.parse(localStorage.getItem('pulse_listings')||'[]');
-let tempPhotos = [];
-if(listings.length===0){
-  listings=[
-    {title:"VW Polo 1.4 - 2018, Clean",price:89900,loc:"Klerksdorp",cat:"Cars",phone:"0821234567",images:["https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=500","https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=500","https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=500","https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=500","https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=500"],rating:4.9,rates:32},
-    {title:"PS5 + 2 Controllers",price:9500,loc:"Matlosana",cat:"Electronics",phone:"0821234567",images:["https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=500","https://images.unsplash.com/photo-1622297845775-5ff3fef71d13?w=500","https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=500","https://images.unsplash.com/photo-1592840496694-26d035b52b48?w=500","https://images.unsplash.com/photo-1486401899868-0e435ed85128?w=500"],rating:4.8,rates:21},
-  ];
-  localStorage.setItem('pulse_listings',JSON.stringify(listings));
+if(listings.some(l=>l.title && (l.title.includes('VW Polo')||l.title.includes('PS5')))){
+  listings = [];
+  localStorage.setItem('pulse_listings', JSON.stringify(listings));
 }
+let tempPhotos = [];
 let currentCat='All';
 function setCat(c,el){ currentCat=c; document.querySelectorAll('.cats button').forEach(b=>b.classList.remove('active')); el.classList.add('active'); render(); }
 function stars(r){ let s=''; for(let i=1;i<=5;i++) s+= i<=Math.round(r)?'★':'☆'; return s; }
-function testUpload(){ alert("If you see this, the page loaded NEW version. Now tap the pink CHOOSE FILES button. If gallery opens, it works. If not, tell me what phone you use: iPhone or Android?"); }
-
 document.getElementById('pFiles').addEventListener('change', function(e){
   let files = Array.from(e.target.files);
-  alert("You picked " + files.length + " photos - compressing now...");
-  if(!files.length){ alert("No photos picked"); return; }
+  if(!files.length) return;
   files.forEach(file=>{
     let reader = new FileReader();
     reader.onload = function(ev){
@@ -108,7 +99,6 @@ document.getElementById('pFiles').addEventListener('change', function(e){
         tempPhotos.push(canvas.toDataURL('image/jpeg', 0.7));
         updatePreview();
       };
-      img.onerror = ()=> alert("Could not read that photo - try another");
       img.src = ev.target.result;
     };
     reader.readAsDataURL(file);
@@ -130,6 +120,10 @@ function render(){
   let q=document.getElementById('searchInput').value.toLowerCase();
   let filtered=listings.filter(l=>(currentCat==='All'||l.cat===currentCat)&&(l.title.toLowerCase().includes(q)||l.loc.toLowerCase().includes(q)));
   document.getElementById('listingCount').innerText=listings.length;
+  if(filtered.length===0){
+    document.getElementById('grid').innerHTML = `<div class="empty" style="grid-column:1/-1"><h2>👋 Welcome to PULSE!</h2><p>No listings yet.<br><b style="color:#ff2d55">Be the FIRST to post!</b><br><br>Post your hustle above with 5 photos<br>and watch this page fill up.</p></div>`;
+    return;
+  }
   document.getElementById('grid').innerHTML=filtered.map((l,i)=>{
     let imgs = l.images || [l.img];
     let thumbs = imgs.slice(0,5).map(im=>`<img src="${im}" onclick="document.getElementById('main-${i}').src=this.src">`).join('');
@@ -143,10 +137,11 @@ function addListing(){
   listings.unshift({title:t,price:parseFloat(p),loc:loc,cat:cat,phone:ph,images:[...tempPhotos],rating:5,rates:1});
   try{ localStorage.setItem('pulse_listings',JSON.stringify(listings)); }catch(e){ alert("Storage full - photos too big"); return; }
   tempPhotos=[]; updatePreview(); document.getElementById('pTitle').value=''; document.getElementById('pPrice').value=''; document.getElementById('pLoc').value=''; document.getElementById('pPhone').value='';
-  render(); alert("🔥 LIVE!");
+  render(); alert("🔥 LIVE! You're the first!");
 }
 render();
-fetch('https://api.countapi.xyz/hit/pulse-v3-liart/visits').then(r=>r.json()).then(d=>{ document.getElementById('visits').innerText=d.value; }).catch(()=>{ document.getElementById('visits').innerText='1,200+'; });
+// REAL VISITS - counted by counter, true number is in Vercel Analytics
+fetch('https://api.countapi.xyz/hit/pulse-v3-liart/visits').then(r=>r.json()).then(d=>{ document.getElementById('visits').innerText=d.value; }).catch(()=>{ document.getElementById('visits').innerText='—'; });
 </script>
 </body>
 </html>
