@@ -19,16 +19,21 @@ header span{color:#22c55e}
 .pinbox{max-width:420px;margin:10px auto;background:#1e293b;padding:16px;border-radius:14px}
 input{width:100%;padding:14px;font-size:22px;text-align:center;border-radius:10px;border:none;margin:8px 0}
 button{width:100%;padding:14px;font-size:18px;font-weight:bold;border:none;border-radius:10px;background:#22c55e;cursor:pointer}
+button.smallbtn{width:auto;padding:10px 14px;font-size:14px;background:#334155;color:white}
+button.active{background:#22c55e;color:#000}
 button.out{background:#f97316}
 .small{font-size:13px;color:#94a3b8}
 table{width:100%;border-collapse:collapse;background:#1e293b;border-radius:12px;overflow:hidden}
 th,td{padding:10px;border-bottom:1px solid #334155;text-align:left;font-size:14px}
+select,input[type=date]{padding:10px;border-radius:8px;border:none;font-size:15px}
+.weekwrap{overflow-x:auto}
 </style>
 </head>
 <body>
 <header>⚡ PULSE <span>CLOCK</span> <span id="modeLabel" style="font-size:13px;color:#94a3b8"></span></header>
 <div id="clock">--:--:--</div>
 <div id="date"></div>
+
 <div id="wallView">
 <div class="pinbox">
 <h3 style="margin:0">Enter PIN to Clock IN / OUT</h3>
@@ -38,11 +43,38 @@ th,td{padding:10px;border-bottom:1px solid #334155;text-align:left;font-size:14p
 </div>
 <div class="grid" id="wallGrid"></div>
 </div>
-<div id="bossView" style="display:none;max-width:900px;margin:auto;padding:12px">
+
+<div id="bossView" style="display:none;max-width:980px;margin:auto;padding:12px">
 <button onclick="enableNoti()" style="background:#facc15;color:#000;margin-bottom:12px">🔔 Turn ON Pop-up Notifications</button>
+<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:12px">
+<button class="smallbtn active" id="btnDay" onclick="showDayView()">📅 Daily</button>
+<button class="smallbtn" id="btnWeek" onclick="showWeekView()">📊 Weekly Report (Mon-Fri)</button>
+</div>
+
+<div id="dayView">
+<div style="display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+<button class="smallbtn" onclick="changeDay(-1)">← Prev</button>
+<input type="date" id="bossDate">
+<button class="smallbtn" onclick="changeDay(1)">Next →</button>
+<button class="smallbtn" onclick="goToday()">Today</button>
+</div>
+<p id="dayTitle" style="font-weight:bold"></p>
 <table><thead><tr><th>Worker</th><th>Status</th><th>Time</th></tr></thead><tbody id="bossBody"></tbody></table>
+</div>
+
+<div id="weekView" style="display:none">
+<div style="display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+<button class="smallbtn" onclick="changeWeek(-1)">← Prev Week</button>
+<span id="weekTitle" style="font-weight:bold"></span>
+<button class="smallbtn" onclick="changeWeek(1)">Next Week →</button>
+</div>
+<div class="weekwrap"><table><thead><tr><th>Worker</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Total Hours</th></tr></thead><tbody id="weekBody"></tbody></table></div>
+<p class="small">Mon-Fri only. Green = On Time, Orange = Late, Grey = Absent. Hours = OUT minus IN.</p>
+<button onclick="shareWeek()" style="background:#22c55e;margin-top:12px">📤 Share Weekly Report</button>
+</div>
 <p class="small">Live - updates instantly. Late = after 08:00</p>
 </div>
+
 <script>
 function tick(){
   var d=new Date();
@@ -78,7 +110,8 @@ const WORKERS = [
 const LATE_MIN = 8*60;
 const params2 = new URLSearchParams(location.search);
 const isBoss2 = params2.get("mode")==="boss";
-function todayKey(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function fmtKey(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function todayKey(){ return fmtKey(new Date()); }
 function nowStr(){ const d=new Date(); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
 function minsNow(){ const d=new Date(); return d.getHours()*60+d.getMinutes(); }
 function statusFor(rec){
@@ -88,6 +121,8 @@ function statusFor(rec){
   if(parts[0]*60+parts[1] > LATE_MIN) return {label:"LATE",cls:"late",time:rec.in};
   return {label:"IN",cls:"in",time:rec.in};
 }
+function toMins(t){ if(!t) return 0; const p=t.split(":").map(Number); return p[0]*60+p[1]; }
+function hoursFor(rec){ if(!rec||!rec.in||!rec.out) return 0; return Math.max(0,(toMins(rec.out)-toMins(rec.in))/60); }
 const ref = doc(db,"pulse-clock",todayKey());
 let lastNotified = new Set();
 onSnapshot(ref, (snap)=>{
@@ -97,11 +132,7 @@ onSnapshot(ref, (snap)=>{
     const s = statusFor(data[name]);
     return `<div class="card"><h3>${name}</h3><span class="badge ${s.cls}">${s.label}</span><div style="margin-top:8px">${s.time}</div></div>`;
   }).join("");
-  const body = document.getElementById("bossBody");
-  body.innerHTML = WORKERS.map(([name])=>{
-    const s = statusFor(data[name]);
-    return `<tr><td><b>${name}</b></td><td><span class="badge ${s.cls}">${s.label}</span></td><td>${s.time}</td></tr>`;
-  }).join("");
+  if(isBoss2 && bossViewingToday()) renderBossDay(data);
   if(isBoss2 && Notification.permission==="granted"){
     WORKERS.forEach(([name])=>{
       const s = statusFor(data[name]);
@@ -137,6 +168,85 @@ window.doClock = async ()=>{
   document.getElementById("pinInput").value="";
   msg.style.color="white";
 };
+let bossDate = new Date();
+let weekStart = getMonday(new Date());
+function getMonday(d){ const c=new Date(d); const day=(c.getDay()+6)%7; c.setDate(c.getDate()-day); c.setHours(0,0,0,0); return c; }
+function bossViewingToday(){ return fmtKey(bossDate)===todayKey(); }
+async function loadBossDay(){
+  const key = fmtKey(bossDate);
+  document.getElementById("bossDate").value = key;
+  document.getElementById("dayTitle").textContent = bossDate.toDateString() + (bossViewingToday() ? " (Today - Live)" : " (History)");
+  const snap = await getDoc(doc(db,"pulse-clock",key));
+  renderBossDay(snap.exists()? snap.data().records||{} : {});
+}
+function renderBossDay(data){
+  const body = document.getElementById("bossBody");
+  body.innerHTML = WORKERS.map(([name])=>{
+    const s = statusFor(data[name]);
+    return `<tr><td><b>${name}</b></td><td><span class="badge ${s.cls}">${s.label}</span></td><td>${s.time}</td></tr>`;
+  }).join("");
+}
+window.changeDay = (n)=>{ bossDate.setDate(bossDate.getDate()+n); loadBossDay(); };
+window.goToday = ()=>{ bossDate=new Date(); loadBossDay(); };
+window.showDayView = ()=>{
+  document.getElementById("dayView").style.display="block";
+  document.getElementById("weekView").style.display="none";
+  document.getElementById("btnDay").classList.add("active");
+  document.getElementById("btnWeek").classList.remove("active");
+  loadBossDay();
+};
+window.showWeekView = ()=>{
+  document.getElementById("dayView").style.display="none";
+  document.getElementById("weekView").style.display="block";
+  document.getElementById("btnWeek").classList.add("active");
+  document.getElementById("btnDay").classList.remove("active");
+  loadWeek();
+};
+window.changeWeek = (n)=>{ weekStart.setDate(weekStart.getDate()+(n*7)); loadWeek(); };
+async function loadWeek(){
+  const end = new Date(weekStart); end.setDate(end.getDate()+4);
+  document.getElementById("weekTitle").textContent = weekStart.toDateString() + " - " + end.toDateString();
+  const days = [];
+  for(let i=0;i<5;i++){ const d=new Date(weekStart); d.setDate(d.getDate()+i); days.push(d); }
+  const allData = [];
+  for(let d of days){
+    const snap = await getDoc(doc(db,"pulse-clock",fmtKey(d)));
+    allData.push(snap.exists()? snap.data().records||{} : {});
+  }
+  const body = document.getElementById("weekBody");
+  body.innerHTML = WORKERS.map(([name])=>{
+    let total=0;
+    const cells = allData.map(data=>{
+      const rec=data[name];
+      total+=hoursFor(rec);
+      if(!rec||!rec.in) return `<td style="color:#94a3b8">—</td>`;
+      const late = toMins(rec.in)>LATE_MIN;
+      const bg = late ? "#f97316" : "#22c55e";
+      return `<td><span class="badge" style="background:${bg};color:#000;font-size:11px">${rec.in}${rec.out?" - "+rec.out:""}</span></td>`;
+    }).join("");
+    return `<tr><td><b>${name}</b></td>${cells}<td><b>${total.toFixed(1)}h</b></td></tr>`;
+  }).join("");
+  window._weekData = {days, allData};
+}
+window.shareWeek = ()=>{
+  if(!window._weekData) return;
+  const {days, allData} = window._weekData;
+  let txt = `PULSE WEEKLY REPORT (MON-FRI)\n${days[0].toDateString()} - ${days[4].toDateString()}\n\n`;
+  WORKERS.forEach(([name])=>{
+    let total=0;
+    let line = name+": ";
+    allData.forEach(data=>{
+      const rec=data[name];
+      total+=hoursFor(rec);
+      line += rec?.in ? `${rec.in}${rec.out?"-"+rec.out:""} | ` : "Absent | ";
+    });
+    txt += line + `Total: ${total.toFixed(1)}h\n`;
+  });
+  if(navigator.share){ navigator.share({text: txt}); }
+  else { navigator.clipboard.writeText(txt); alert("Report copied! Paste in WhatsApp"); }
+};
+document.getElementById("bossDate")?.addEventListener("change",(e)=>{ bossDate=new Date(e.target.value+"T12:00:00"); loadBossDay(); });
+if(isBoss2){ bossDate=new Date(); loadBossDay(); }
 </script>
 </body>
 </html>
