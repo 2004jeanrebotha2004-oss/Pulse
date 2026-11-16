@@ -43,6 +43,22 @@ th,td{padding:10px;border-bottom:1px solid #334155;text-align:left;font-size:14p
 <table><thead><tr><th>Worker</th><th>Status</th><th>Time</th></tr></thead><tbody id="bossBody"></tbody></table>
 <p class="small">Live - updates instantly. Late = after 08:00</p>
 </div>
+<script>
+function tick(){
+  var d=new Date();
+  document.getElementById("clock").textContent = d.toLocaleTimeString("en-ZA");
+  document.getElementById("date").textContent = d.toDateString();
+}
+setInterval(tick,1000); tick();
+var params = new URLSearchParams(location.search);
+var isBoss = params.get("mode")==="boss";
+document.getElementById("modeLabel").textContent = isBoss ? "• BOSS VIEW" : "• WALL CLOCK";
+if(isBoss){ document.getElementById("wallView").style.display="none"; document.getElementById("bossView").style.display="block"; }
+window.enableNoti = async ()=>{
+  var p = await Notification.requestPermission();
+  alert(p==="granted" ? "Pop-ups ON ✅" : "Please Allow notifications in phone settings");
+};
+</script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, doc, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -60,27 +76,67 @@ const WORKERS = [
 ["Jeanré","1234"],["Sakes","2254"],["Johan","1544"],["Fransie","3677"],["Freddy","4488"],["Simon","6754"],["Jacob","4291"],["Michael","3561"],["Cliff","5288"],["Kleintjie","5322"],["Benjamin","1156"],["Abel","3388"],["Samuel","1299"],["John","3898"]
 ];
 const LATE_MIN = 8*60;
-const params = new URLSearchParams(location.search);
-const isBoss = params.get("mode")==="boss";
-document.getElementById("modeLabel").textContent = isBoss ? "• BOSS VIEW" : "• WALL CLOCK";
-if(isBoss){ document.getElementById("wallView").style.display="none"; document.getElementById("bossView").style.display="block"; }
+const params2 = new URLSearchParams(location.search);
+const isBoss2 = params2.get("mode")==="boss";
 function todayKey(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 function nowStr(){ const d=new Date(); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
 function minsNow(){ const d=new Date(); return d.getHours()*60+d.getMinutes(); }
 function statusFor(rec){
   if(!rec || !rec.in) return {label:"NOT IN",cls:"not",time:"—"};
   if(rec.out) return {label:"OUT",cls:"out",time:rec.in+" - "+rec.out};
-  const [h,m]=rec.in.split(":").map(Number);
-  if(h*60+m > LATE_MIN) return {label:"LATE",cls:"late",time:rec.in};
+  const parts=rec.in.split(":").map(Number);
+  if(parts[0]*60+parts[1] > LATE_MIN) return {label:"LATE",cls:"late",time:rec.in};
   return {label:"IN",cls:"in",time:rec.in};
 }
-function tick(){
-  const d=new Date();
-  document.getElementById("clock").textContent = d.toLocaleTimeString("en-ZA");
-  document.getElementById("date").textContent = d.toDateString();
-}
-setInterval(tick,1000); tick();
 const ref = doc(db,"pulse-clock",todayKey());
 let lastNotified = new Set();
 onSnapshot(ref, (snap)=>{
-  const data = snap.exists() ? snap.data().
+  const data = snap.exists() ? snap.data().records || {} : {};
+  const grid = document.getElementById("wallGrid");
+  grid.innerHTML = WORKERS.map(([name])=>{
+    const s = statusFor(data[name]);
+    return `<div class="card"><h3>${name}</h3><span class="badge ${s.cls}">${s.label}</span><div style="margin-top:8px">${s.time}</div></div>`;
+  }).join("");
+  const body = document.getElementById("bossBody");
+  body.innerHTML = WORKERS.map(([name])=>{
+    const s = statusFor(data[name]);
+    return `<tr><td><b>${name}</b></td><td><span class="badge ${s.cls}">${s.label}</span></td><td>${s.time}</td></tr>`;
+  }).join("");
+  if(isBoss2 && Notification.permission==="granted"){
+    WORKERS.forEach(([name])=>{
+      const s = statusFor(data[name]);
+      const key = name+"-"+(data[name]?.in||"");
+      if(s.label==="LATE" && !lastNotified.has(key)){
+        lastNotified.add(key);
+        new Notification("Pulse Clock", {body: `${name} is LATE - Clocked in ${s.time}`});
+      }
+    });
+  }
+});
+window.doClock = async ()=>{
+  const pin = document.getElementById("pinInput").value.trim();
+  const found = WORKERS.find(w=>w[1]===pin);
+  const msg = document.getElementById("msg");
+  if(!found){ msg.textContent="❌ Wrong PIN"; msg.style.color="#f87171"; return; }
+  const name = found[0];
+  const snap = await getDoc(ref);
+  const records = snap.exists() ? snap.data().records || {} : {};
+  const rec = records[name] || {};
+  if(!rec.in){
+    rec.in = nowStr();
+    msg.textContent = minsNow()>LATE_MIN ? `⚠️ ${name} clocked IN LATE at ${rec.in}` : `✅ ${name} clocked IN at ${rec.in}`;
+  } else if(!rec.out){
+    rec.out = nowStr();
+    msg.textContent = `👋 ${name} clocked OUT at ${rec.out}`;
+  } else {
+    msg.textContent = `${name} already finished today`;
+    return;
+  }
+  records[name]=rec;
+  await setDoc(ref,{records},{merge:true});
+  document.getElementById("pinInput").value="";
+  msg.style.color="white";
+};
+</script>
+</body>
+</html>
