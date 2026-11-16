@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pulse Clock</title>
+<style>
+*{box-sizing:border-box;font-family:Arial,sans-serif}
+body{margin:0;background:#0f172a;color:white;text-align:center}
+header{padding:14px;background:#1e293b;font-size:22px;font-weight:bold}
+header span{color:#22c55e}
+#clock{font-size:52px;font-weight:bold;margin:10px 0 0}
+#date{color:#94a3b8;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px;max-width:900px;margin:auto}
+.card{background:#1e293b;border-radius:14px;padding:12px}
+.card h3{margin:4px 0 8px;font-size:18px}
+.badge{display:inline-block;padding:6px 12px;border-radius:20px;font-weight:bold;font-size:13px}
+.in{background:#22c55e;color:#000}.late{background:#f97316;color:#000}.out{background:#334155}.not{background:#475569}
+.pinbox{max-width:420px;margin:10px auto;background:#1e293b;padding:16px;border-radius:14px}
+input{width:100%;padding:14px;font-size:22px;text-align:center;border-radius:10px;border:none;margin:8px 0}
+button{width:100%;padding:14px;font-size:18px;font-weight:bold;border:none;border-radius:10px;background:#22c55e;cursor:pointer}
+button.out{background:#f97316}
+.small{font-size:13px;color:#94a3b8}
+table{width:100%;border-collapse:collapse;background:#1e293b;border-radius:12px;overflow:hidden}
+th,td{padding:10px;border-bottom:1px solid #334155;text-align:left;font-size:14px}
+</style>
+</head>
+<body>
+<header>⚡ PULSE <span>CLOCK</span> <span id="modeLabel" style="font-size:13px;color:#94a3b8"></span></header>
+<div id="clock">--:--:--</div>
+<div id="date"></div>
+<div id="wallView">
+<div class="pinbox">
+<h3 style="margin:0">Enter PIN to Clock IN / OUT</h3>
+<input id="pinInput" inputmode="numeric" placeholder="****" maxlength="4">
+<button onclick="doClock()">CLOCK IN / OUT</button>
+<p class="small" id="msg">Late = after 08:00</p>
+</div>
+<div class="grid" id="wallGrid"></div>
+</div>
+<div id="bossView" style="display:none;max-width:900px;margin:auto;padding:12px">
+<button onclick="enableNoti()" style="background:#facc15;color:#000;margin-bottom:12px">🔔 Turn ON Pop-up Notifications</button>
+<table><thead><tr><th>Worker</th><th>Status</th><th>Time</th></tr></thead><tbody id="bossBody"></tbody></table>
+<p class="small">Live - updates instantly. Late = after 08:00</p>
+</div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyAHZfhcijmp3jvU0Lx0K9zEUwRHSIWT6Gk",
+  authDomain: "pulse-c6717.firebaseapp.com",
+  projectId: "pulse-c6717",
+  storageBucket: "pulse-c6717.firebasestorage.app",
+  messagingSenderId: "268590406803",
+  appId: "1:268590406803:web:6a59d2eeb949b601390166"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const WORKERS = [
+["Jeanré","1234"],["Sakes","2254"],["Johan","1544"],["Fransie","3677"],["Freddy","4488"],["Simon","6754"],["Jacob","4291"],["Michael","3561"],["Cliff","5288"],["Kleintjie","5322"],["Benjamin","1156"],["Abel","3388"],["Samuel","1299"],["John","3898"]
+];
+const LATE_MIN = 8*60;
+const params = new URLSearchParams(location.search);
+const isBoss = params.get("mode")==="boss";
+document.getElementById("modeLabel").textContent = isBoss ? "• BOSS VIEW" : "• WALL CLOCK";
+if(isBoss){ document.getElementById("wallView").style.display="none"; document.getElementById("bossView").style.display="block"; }
+function todayKey(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function nowStr(){ const d=new Date(); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
+function minsNow(){ const d=new Date(); return d.getHours()*60+d.getMinutes(); }
+function statusFor(rec){
+  if(!rec || !rec.in) return {label:"NOT IN",cls:"not",time:"—"};
+  if(rec.out) return {label:"OUT",cls:"out",time:rec.in+" - "+rec.out};
+  const [h,m]=rec.in.split(":").map(Number);
+  if(h*60+m > LATE_MIN) return {label:"LATE",cls:"late",time:rec.in};
+  return {label:"IN",cls:"in",time:rec.in};
+}
+function tick(){
+  const d=new Date();
+  document.getElementById("clock").textContent = d.toLocaleTimeString("en-ZA");
+  document.getElementById("date").textContent = d.toDateString();
+}
+setInterval(tick,1000); tick();
+const ref = doc(db,"pulse-clock",todayKey());
+let lastNotified = new Set();
+onSnapshot(ref, (snap)=>{
+  const data = snap.exists() ? snap.data().
