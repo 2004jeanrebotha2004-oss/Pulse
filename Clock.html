@@ -107,9 +107,9 @@ const db = getFirestore(app);
 const WORKERS = [
 ["Jeanré","1234"],["Shakes","2254"],["Johan","1544"],["Fransie","3677"],["Freddy","4488"],["Simon","6754"],["Jacob","4291"],["Michael","3561"],["Cliff","5288"],["Kleintjie","5322"],["Benjamin","1156"],["Abel","3388"],["Samuel","1299"],["John","3898"]
 ];
-const LATE_MIN = 7*60+40; // 07:40
-const LUNCH_IN_LATE_MIN = 14*60; // 14:00
-const MIN_OUT_MIN = 16*60+55; // 16:55
+const LATE_MIN = 7*60+40;
+const LUNCH_IN_LATE_MIN = 14*60;
+const MIN_OUT_MIN = 16*60+55;
 const params2 = new URLSearchParams(location.search);
 const isBoss2 = params2.get("mode")==="boss";
 function fmtKey(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
@@ -220,4 +220,89 @@ window.doClock = async ()=>{
   }
   records[name]=rec;
   await setDoc(ref,{records},{merge:true});
-  document.getElementById("
+  document.getElementById("pinInput").value="";
+  msg.style.color="white";
+};
+let bossDate = new Date();
+let weekStart = getMonday(new Date());
+function getMonday(d){ const c=new Date(d); const day=(c.getDay()+6)%7; c.setDate(c.getDate()-day); c.setHours(0,0,0,0); return c; }
+function bossViewingToday(){ return fmtKey(bossDate)===todayKey(); }
+async function loadBossDay(){
+  const key = fmtKey(bossDate);
+  document.getElementById("bossDate").value = key;
+  document.getElementById("dayTitle").textContent = bossDate.toDateString() + (bossViewingToday() ? " (Today - Live)" : " (History)");
+  const snap = await getDoc(doc(db,"pulse-clock",key));
+  renderBossDay(snap.exists()? snap.data().records||{} : {});
+}
+function renderBossDay(data){
+  const body = document.getElementById("bossBody");
+  body.innerHTML = WORKERS.map(([name])=>{
+    const s = statusFor(getRec(data,name));
+    return `<tr><td><b>${name}</b></td><td><span class="badge ${s.cls}">${s.label}</span></td><td>${s.time}</td></tr>`;
+  }).join("");
+}
+window.changeDay = (n)=>{ bossDate.setDate(bossDate.getDate()+n); loadBossDay(); };
+window.goToday = ()=>{ bossDate=new Date(); loadBossDay(); };
+window.showDayView = ()=>{
+  document.getElementById("dayView").style.display="block";
+  document.getElementById("weekView").style.display="none";
+  document.getElementById("btnDay").classList.add("active");
+  document.getElementById("btnWeek").classList.remove("active");
+  loadBossDay();
+};
+window.showWeekView = ()=>{
+  document.getElementById("dayView").style.display="none";
+  document.getElementById("weekView").style.display="block";
+  document.getElementById("btnWeek").classList.add("active");
+  document.getElementById("btnDay").classList.remove("active");
+  loadWeek();
+};
+window.changeWeek = (n)=>{ weekStart.setDate(weekStart.getDate()+(n*7)); loadWeek(); };
+async function loadWeek(){
+  const end = new Date(weekStart); end.setDate(end.getDate()+4);
+  document.getElementById("weekTitle").textContent = weekStart.toDateString() + " - " + end.toDateString();
+  const days = [];
+  for(let i=0;i<5;i++){ const d=new Date(weekStart); d.setDate(d.getDate()+i); days.push(d); }
+  const allData = [];
+  for(let d of days){
+    const snap = await getDoc(doc(db,"pulse-clock",fmtKey(d)));
+    allData.push(snap.exists()? snap.data().records||{} : {});
+  }
+  const body = document.getElementById("weekBody");
+  body.innerHTML = WORKERS.map(([name])=>{
+    let total=0;
+    const cells = allData.map(data=>{
+      const rec=getRec(data,name);
+      total+=hoursFor(rec);
+      if(!rec||!rec.in) return `<td style="color:#94a3b8">—</td>`;
+      const late = isLateIn(rec) || isLateLunch(rec) || isEarlyOut(rec);
+      const bg = late ? "#f97316" : "#22c55e";
+      const label = rec.out ? formatTimes(rec) : formatTimes(rec) + " ...";
+      return `<td><span class="badge" style="background:${bg};color:#000;font-size:11px">${label}</span></td>`;
+    }).join("");
+    return `<tr><td><b>${name}</b></td>${cells}<td><b>${total.toFixed(1)}h</b></td></tr>`;
+  }).join("");
+  window._weekData = {days, allData};
+}
+window.shareWeek = ()=>{
+  if(!window._weekData) return;
+  const {days, allData} = window._weekData;
+  let txt = `PULSE WEEKLY REPORT (MON-FRI)\n${days[0].toDateString()} - ${days[4].toDateString()}\n\n`;
+  WORKERS.forEach(([name])=>{
+    let total=0;
+    let line = name+": ";
+    allData.forEach(data=>{
+      const rec=getRec(data,name);
+      total+=hoursFor(rec);
+      line += rec?.in ? `${formatTimes(rec)} | ` : "Absent | ";
+    });
+    txt += line + `Total: ${total.toFixed(1)}h\n`;
+  });
+  if(navigator.share){ navigator.share({text: txt}); }
+  else { navigator.clipboard.writeText(txt); alert("Report copied! Paste in WhatsApp"); }
+};
+document.getElementById("bossDate")?.addEventListener("change",(e)=>{ bossDate=new Date(e.target.value+"T12:00:00"); loadBossDay(); });
+if(isBoss2){ bossDate=new Date(); loadBossDay(); }
+</script>
+</body>
+</html>
